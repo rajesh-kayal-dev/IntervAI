@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    color: #111827;
+    overflow-x: hidden;
+    background-color: #E9EFED;
+  }
+}
+
+.font-playfair { font-family: 'Playfair Display', serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Ambient Glow Layer - Light theme adaptation */
+.ambient-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.7) 0%, transparent 60%);
+  transition: background 0.8s ease;
+}
+
+/* Animations */
+@keyframes gradient-shift {
+  0% { background-position: 0% center; }
+  100% { background-position: 100% center; }
+}
+.animate-gradient-shift {
+  background-size: 200% auto;
+  animation: gradient-shift 5s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(0.98); }
+  50% { transform: scale(1.02); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
+}
+
+@keyframes float-indicator {
+  0%, 100% { transform: translateY(0) translateX(-50%); }
+  50% { transform: translateY(6px) translateX(-50%); }
+}
+.animate-float-indicator {
+  animation: float-indicator 2.5s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #E9EFED; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+
+/* Shimmer Button */
+.btn-shimmer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+  transform: translateX(-200%);
+  transition: transform 0.7s ease;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+.btn-shimmer:hover::before { transform: translateX(200%); }
+
+/* Card Spotlight Effect - Light theme */
+.spotlight-card {
+  position: relative;
+  overflow: hidden;
+}
+.spotlight-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: radial-gradient(250px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(27,108,66,0.04) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.spotlight-card:hover::before { opacity: 1; }
+.spotlight-content { position: relative; z-index: 10; }
+
+/* Feature Card Icon Hover Animation */
+.icon-container {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.spotlight-card:hover .icon-container {
+  transform: scale(1.1) rotate(5deg);
+}

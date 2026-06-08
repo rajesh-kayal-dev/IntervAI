@@ -1,0 +1,944 @@
+<html lang="en" class="scroll-smooth bg-[#E9EFED]"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sapling — AI-Powered Adaptive Learning</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Playfair+Display:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+/* Base & Fonts */
+body {
+font-family: 'Inter', sans-serif;
+color: #111827;
+overflow-x: hidden;
+background-color: #E9EFED;
+}
+.font-playfair { font-family: 'Playfair Display', serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+/* Ambient Glow Layer - Light theme adaptation */
+.ambient-glow {
+position: fixed;
+inset: 0;
+z-index: 0;
+pointer-events: none;
+background: radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.7) 0%, transparent 60%);
+transition: background 0.8s ease;
+}
+/* Animations */
+@keyframes gradient-shift {
+0% { background-position: 0% center; }
+100% { background-position: 100% center; }
+}
+.animate-gradient-shift {
+background-size: 200% auto;
+animation: gradient-shift 5s ease-in-out infinite alternate;
+}
+@keyframes pulse-slow {
+0%, 100% { transform: scale(0.98); }
+50% { transform: scale(1.02); }
+}
+.animate-pulse-slow {
+animation: pulse-slow 4s ease-in-out infinite;
+}
+@keyframes float-indicator {
+0%, 100% { transform: translateY(0) translateX(-50%); }
+50% { transform: translateY(6px) translateX(-50%); }
+}
+.animate-float-indicator {
+animation: float-indicator 2.5s ease-in-out infinite;
+}
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #E9EFED; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
+/* Shimmer Button */
+.btn-shimmer::before {
+content: '';
+position: absolute;
+inset: 0;
+background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+transform: translateX(-200%);
+transition: transform 0.7s ease;
+border-radius: 9999px;
+pointer-events: none;
+}
+.btn-shimmer:hover::before { transform: translateX(200%); }
+/* Card Spotlight Effect - Light theme */
+.spotlight-card {
+position: relative;
+overflow: hidden;
+}
+.spotlight-card::before {
+content: "";
+position: absolute;
+inset: 0;
+border-radius: 1rem;
+background: radial-gradient(250px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(27,108,66,0.04) 0%, transparent 70%);
+opacity: 0;
+transition: opacity 0.5s ease;
+pointer-events: none;
+z-index: 0;
+}
+.spotlight-card:hover::before { opacity: 1; }
+.spotlight-content { position: relative; z-index: 10; }
+/* Feature Card Icon Hover Animation */
+.icon-container {
+transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.spotlight-card:hover .icon-container {
+transform: scale(1.1) rotate(5deg);
+}
+</style><!-- aura-ga4-start -->
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-2M6V79H761"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-2M6V79H761');
+</script>
+<!-- aura-ga4-end -->
+</head>
+<body class="antialiased selection:bg-[#1B6C42]/20 selection:text-[#111827]">
+
+    <div class="ambient-glow" id="ambient-glow"></div>
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-0 w-full z-50 bg-[#E9EFED]/80 backdrop-blur-xl border-b border-gray-200 px-8 py-4 opacity-0 transform -translate-y-[30px] transition-all duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)]">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2 cursor-pointer group" onclick="window.scrollTo(0,0)">
+                <svg viewBox="0 0 24 24" class="w-6 h-6 animate-pulse-slow" fill="none" stroke="#1B6C42" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22V12M12 12L5 5M12 12L19 5"></path>
+                </svg>
+                <span class="font-playfair text-xl font-semibold tracking-tight text-[#111827]">Sapling</span>
+            </div>
+            <div class="flex items-center">
+                <button onclick="openModal('signin')" class="text-gray-500 hover:text-gray-900 font-medium text-sm tracking-wide transition-all duration-300 mr-6 hidden sm:block">Sign In</button>
+                <button onclick="openModal('signup')" class="relative overflow-hidden group bg-[#1B6C42] text-white px-7 py-2.5 rounded-full font-medium text-sm tracking-wide shadow-sm hover:shadow-md transition-all duration-400 hover:scale-[1.04] active:scale-[0.97] btn-shimmer">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <!-- 3D Canvas Background -->
+        <canvas id="hero-canvas" class="absolute inset-0 z-0 w-full h-full pointer-events-auto opacity-100"></canvas>
+
+        <!-- Floating Glass Accent Cards (Desktop Only) -->
+        <div class="absolute inset-0 z-10 hidden lg:block pointer-events-none" id="floating-cards-container">
+            <!-- Card A: Mini Progress -->
+            <div class="floating-card absolute top-[20%] left-[15%] w-48 bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-sm p-4 opacity-0 scale-90" data-base-rot="-6" data-float-delay="0" data-float-dur="5000">
+                <span class="font-mono text-xs text-[#3B82F6] font-medium block mb-3">CS 101</span>
+                <div class="h-1 rounded-full bg-gray-100 w-full overflow-hidden mb-2">
+                    <div class="h-full bg-[#3B82F6] w-[55%] rounded-full"></div>
+                </div>
+                <span class="text-xs text-gray-400 block">55% mastered</span>
+            </div>
+
+            <!-- Card B: Legend -->
+            <div class="floating-card absolute top-[30%] right-[15%] w-52 bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-sm p-5 opacity-0 scale-90" data-base-rot="4" data-float-delay="1000" data-float-dur="6000">
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#1B6C42]"></div><span class="text-xs text-gray-500 uppercase tracking-wide">Mastered</span></div>
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#D97706]"></div><span class="text-xs text-gray-500 uppercase tracking-wide">Learning</span></div>
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-[#EF4444]"></div><span class="text-xs text-gray-500 uppercase tracking-wide">Struggling</span></div>
+                    <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-300"></div><span class="text-xs text-gray-500 uppercase tracking-wide">Unexplored</span></div>
+                </div>
+            </div>
+
+            <!-- Card C: Quick Actions -->
+            <div class="floating-card absolute bottom-[25%] left-[10%] w-44 bg-white/90 backdrop-blur-xl rounded-2xl border border-gray-200 shadow-sm p-4 flex flex-col gap-2 opacity-0 scale-90" data-base-rot="3" data-float-delay="500" data-float-dur="4500">
+                <div class="bg-gray-50 border border-gray-100 rounded-xl py-2 flex items-center justify-center gap-2">
+                    <i data-lucide="pen-square" class="text-gray-400 w-4 h-4" stroke-width="1.5"></i>
+                    <span class="text-xs text-gray-500">Quick Quiz</span>
+                </div>
+                <div class="bg-gray-50 border border-gray-100 rounded-xl py-2 flex items-center justify-center gap-2">
+                    <i data-lucide="users" class="text-gray-400 w-4 h-4" stroke-width="1.5"></i>
+                    <span class="text-xs text-gray-500">Study Room</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hero Content Layer -->
+        <div id="hero-content" class="relative z-20 flex flex-col items-center text-center max-w-4xl px-6">
+            
+            <div class="hero-anim opacity-0 translate-y-[25px] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] delay-[100ms]">
+                <div class="inline-flex items-center gap-2.5 bg-white border border-gray-200 shadow-sm rounded-full px-5 py-2">
+                    <div class="w-2 h-2 rounded-full bg-[#1B6C42] animate-pulse"></div>
+                    <span class="font-mono text-xs tracking-[0.25em] uppercase text-gray-500 font-medium">AI-Powered Learning</span>
+                </div>
+            </div>
+
+            <h1 class="hero-anim opacity-0 translate-y-[25px] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] delay-[300ms] font-playfair text-5xl sm:text-7xl md:text-8xl lg:text-[10rem] font-semibold text-[#111827] leading-[0.9] tracking-tight mt-8">
+                <span id="hero-title-1">Grow Your</span> <br>
+                <span id="hero-title-2" class="bg-gradient-to-r from-[#1B6C42] via-[#2D8F5C] to-[#1B6C42] bg-clip-text text-transparent animate-gradient-shift">Knowledge</span>
+            </h1>
+
+            <p class="hero-anim opacity-0 translate-y-[25px] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] delay-[500ms] font-inter text-lg md:text-xl text-gray-500 max-w-xl mx-auto mt-7 leading-relaxed tracking-wide font-light">
+                Map everything you know. Find the gaps. Master any subject, guided by AI and spaced repetition.
+            </p>
+
+            <div class="hero-anim opacity-0 translate-y-[25px] transition-all duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] delay-[700ms] flex flex-col sm:flex-row gap-4 mt-10 items-center justify-center">
+                <button onclick="openModal('signup')" class="relative overflow-hidden group bg-[#1B6C42] text-white px-10 py-4 rounded-full font-medium text-base tracking-wide shadow-md hover:shadow-lg hover:bg-[#155A35] transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] btn-shimmer">
+                    Get Started
+                </button>
+                <button onclick="document.getElementById('features').scrollIntoView()" class="bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 px-10 py-4 rounded-full font-medium text-base shadow-sm transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]">
+                    See What's Inside <span class="ml-1 opacity-50">↓</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div id="scroll-indicator" class="absolute bottom-8 left-1/2 opacity-0 transition-opacity duration-1000 ease-in-out delay-[1200ms] animate-float-indicator flex flex-col items-center">
+            <div class="w-[1px] h-14 bg-gradient-to-b from-transparent via-gray-300 to-transparent"></div>
+            <span class="font-mono text-xs tracking-[0.4em] text-gray-400 mt-3">SCROLL</span>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="relative py-32 bg-[#E9EFED] z-10">
+        <!-- Section Divider -->
+        <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+
+        <div class="max-w-6xl mx-auto px-6 lg:px-8">
+            
+            <div class="text-center mb-16 fade-up">
+                <span class="font-mono text-xs tracking-[0.3em] text-[#1B6C42] uppercase font-medium">Features</span>
+                <h2 class="font-playfair text-4xl md:text-6xl font-semibold text-[#111827] mt-4 leading-tight tracking-tight">Everything You Need<br>to Learn Smarter</h2>
+                <p class="font-inter text-gray-500 text-lg mt-6 max-w-lg mx-auto font-light leading-relaxed">Six powerful tools. One beautiful platform. Built for how your brain actually works.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                
+                <!-- Card 1 -->
+                <div class="spotlight-card group bg-white rounded-2xl p-8 border border-gray-200 shadow-sm transition-all duration-500 hover:border-gray-300 hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] fade-up" style="transition-delay: 0ms;">
+                    <div class="spotlight-content">
+                        <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#1B6C42]/10">
+                            <i data-lucide="network" class="text-[#1B6C42] w-6 h-6" stroke-width="1.5"></i>
+                        </div>
+                        <h3 class="text-[#111827] font-medium text-lg mb-3 tracking-tight">Interactive Knowledge Graph</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed font-light">Every concept becomes a node in a living 3D network. Watch them glow green as you master topics and see how everything connects.</p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="spotlight-card group bg-white rounded-2xl p-8 border border-gray-200 shadow-sm transition-all duration-500 hover:border-gray-300 hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] fade-up" style="transition-delay: 80ms;">
+                    <div class="spotlight-content">
+                        <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#D97706]/10">
+                            <i data-lucide="sparkles" class="text-[#D97706] w-6 h-6" stroke-width="1.5"></i>
+                        </div>
+                        <h3 class="text-[#111827] font-medium text-lg mb-3 tracking-tight">AI-Powered Study Paths</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed font-light">Our AI analyzes your knowledge gaps and builds the optimal sequence — so you always study the right thing at the right time.</p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="spotlight-card group bg-white rounded-2xl p-8 border border-gray-200 shadow-sm transition-all duration-500 hover:border-gray-300 hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] fade-up" style="transition-delay: 160ms;">
+                    <div class="spotlight-content">
+                        <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#14B8A6]/10">
+                            <i data-lucide="file-plus-2" class="text-[#14B8A6] w-6 h-6" stroke-width="1.5"></i>
+                        </div>
+                        <h3 class="text-[#111827] font-medium text-lg mb-3 tracking-tight">Upload Any Coursework</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed font-light">Drop in syllabi, textbooks, or notes. Sapling extracts every concept and maps it to your knowledge graph automatically.</p>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="spotlight-card group bg-white rounded-2xl p-8 border border-gray-200 shadow-sm transition-all duration-500 hover:border-gray-300 hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] fade-up" style="transition-delay: 240ms;">
+                    <div class="spotlight-content">
+                        <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#EF4444]/10">
+                            <i data-lucide="brain" class="text-[#EF4444] w-6 h-6" stroke-width="1.5"></i>
+                        </div>
+                        <h3 class="text-[#111827] font-medium text-lg mb-3 tracking-tight">Adaptive Quizzes</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed font-light">Questions that adapt to your level in real-time. They get harder as you improve — and meet you where you are when you struggle.</p>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="spotlight-card group bg-white rounded-2xl p-8 border border-gray-200 shadow-sm transition-all duration-500 hover:border-gray-300 hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] fade-up" style="transition-delay: 320ms;">
+                    <div class="spotlight-content">
+                        <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#1B6C42]/10">
+                            <i data-lucide="calendar-clock" class="text-[#1B6C42] w-6 h-6" stroke-width="1.5"></i>
+                        </div>
+                        <h3 class="text-[#111827] font-medium text-lg mb-3 tracking-tight">Spaced Repetition</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed font-light">Scientifically-timed reviews move concepts from short-term to long-term memory. Sapling handles the scheduling.</p>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="spotlight-card group bg-white rounded-2xl p-8 border border-gray-200 shadow-sm transition-all duration-500 hover:border-gray-300 hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] fade-up" style="transition-delay: 400ms;">
+                    <div class="spotlight-content">
+                        <div class="icon-container w-12 h-12 rounded-xl flex items-center justify-center mb-5 bg-[#3B82F6]/10">
+                            <i data-lucide="users" class="text-[#3B82F6] w-6 h-6" stroke-width="1.5"></i>
+                        </div>
+                        <h3 class="text-[#111827] font-medium text-lg mb-3 tracking-tight">Study Rooms</h3>
+                        <p class="text-gray-500 text-sm leading-relaxed font-light">Join live study rooms with classmates. Compare knowledge maps. Learn together in real-time.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works (Sticky Scroll Cinema) -->
+    <section id="how-it-works" class="relative h-[300vh] bg-[#E9EFED]">
+        <div class="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+            
+            <!-- Cinematic Background Number -->
+            <div id="step-number-bg" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 font-mono text-[25vw] sm:text-[250px] font-bold text-gray-900/[0.03] pointer-events-none select-none z-0 transition-opacity duration-500">
+                01
+            </div>
+
+            <div class="w-full max-w-2xl px-6 relative z-10 text-center">
+                
+                <!-- Step 1 Content -->
+                <div id="step-1-content" class="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 transition-all duration-[600ms] ease-out">
+                    <span class="font-mono text-xs tracking-[0.3em] text-[#1B6C42] uppercase mb-4 block font-medium">Step 01</span>
+                    <h3 class="font-playfair text-4xl md:text-5xl font-semibold text-[#111827] mb-4 tracking-tight">Sign Up &amp; Add Courses</h3>
+                    <p class="font-inter text-gray-500 text-lg leading-relaxed font-light mx-auto">Connect with Google in one click. Tell us your school and year. Add your classes. Takes 30 seconds.</p>
+                </div>
+
+                <!-- Step 2 Content -->
+                <div id="step-2-content" class="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 transition-all duration-[600ms] ease-out opacity-0 translate-y-[60px] pointer-events-none">
+                    <span class="font-mono text-xs tracking-[0.3em] text-[#1B6C42] uppercase mb-4 block font-medium">Step 02</span>
+                    <h3 class="font-playfair text-4xl md:text-5xl font-semibold text-[#111827] mb-4 tracking-tight">Upload Your Materials</h3>
+                    <p class="font-inter text-gray-500 text-lg leading-relaxed font-light mx-auto">Drop in a syllabus, textbook PDF, or lecture notes. Our AI reads everything, extracts concepts, and builds your knowledge map instantly.</p>
+                </div>
+
+                <!-- Step 3 Content -->
+                <div id="step-3-content" class="absolute left-0 right-0 top-1/2 transform -translate-y-1/2 transition-all duration-[600ms] ease-out opacity-0 translate-y-[60px] pointer-events-none">
+                    <span class="font-mono text-xs tracking-[0.3em] text-[#1B6C42] uppercase mb-4 block font-medium">Step 03</span>
+                    <h3 class="font-playfair text-4xl md:text-5xl font-semibold text-[#111827] mb-4 tracking-tight">Start Growing</h3>
+                    <p class="font-inter text-gray-500 text-lg leading-relaxed font-light mx-auto">Follow your personalized learning path. Take adaptive quizzes. Watch your knowledge graph come alive — node by node turning green.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="bg-white/60 backdrop-blur-md border-y border-gray-200 py-16 relative z-10">
+        <div class="max-w-6xl mx-auto px-6 lg:px-8">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-16 text-center">
+                
+                <div class="stat-fade-up">
+                    <div class="font-mono text-4xl md:text-5xl font-semibold text-[#1B6C42] mb-2">
+                        <span class="counter" data-target="10000">0</span>+
+                    </div>
+                    <div class="font-inter text-xs text-gray-500 tracking-wider uppercase font-medium">Students</div>
+                </div>
+
+                <div class="stat-fade-up">
+                    <div class="font-mono text-4xl md:text-5xl font-semibold text-[#1B6C42] mb-2">
+                        <span class="counter" data-target="500">0</span>K+
+                    </div>
+                    <div class="font-inter text-xs text-gray-500 tracking-wider uppercase font-medium">Concepts Mapped</div>
+                </div>
+
+                <div class="stat-fade-up">
+                    <div class="font-mono text-4xl md:text-5xl font-semibold text-[#1B6C42] mb-2">
+                        <span class="counter" data-target="50">0</span>+
+                    </div>
+                    <div class="font-inter text-xs text-gray-500 tracking-wider uppercase font-medium">Universities</div>
+                </div>
+
+                <div class="stat-fade-up">
+                    <div class="font-mono text-4xl md:text-5xl font-semibold text-[#1B6C42] mb-2">
+                        <span class="counter-float" data-target="4.9">0.0</span>★
+                    </div>
+                    <div class="font-inter text-xs text-gray-500 tracking-wider uppercase font-medium">Average Rating</div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="py-32 relative text-center z-10 overflow-hidden bg-[#E9EFED]">
+        <div class="relative z-10 max-w-3xl mx-auto px-6 fade-up">
+            <h2 class="font-playfair text-5xl md:text-7xl font-semibold text-[#111827] tracking-tight leading-[1.05]">
+                Ready to <br>
+                Start <span class="bg-gradient-to-r from-[#1B6C42] via-[#2D8F5C] to-[#1B6C42] bg-clip-text text-transparent animate-gradient-shift pr-2">Growing?</span>
+            </h2>
+            <p class="text-gray-500 text-lg mt-6 font-light">Join thousands of students who learn smarter, not harder.</p>
+            
+            <div class="mt-10 flex flex-col items-center">
+                <button onclick="openModal('signup')" class="relative overflow-hidden group bg-[#1B6C42] text-white px-10 py-4 rounded-full font-medium text-base tracking-wide shadow-md hover:shadow-lg hover:bg-[#155A35] transition-all duration-500 hover:scale-[1.03] active:scale-[0.98] btn-shimmer">
+                    Get Started
+                </button>
+                <p class="text-gray-400 text-xs mt-4">Free forever for students.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 bg-[#E9EFED] py-12 px-8 relative z-10">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-2 text-gray-500">
+                <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12M12 12L5 5M12 12L19 5"></path></svg>
+                <span class="text-sm font-light tracking-wide">Sapling · © 2026</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6">
+                <a href="#" class="text-gray-500 hover:text-gray-900 text-sm transition-colors">About</a>
+                <a href="#" class="text-gray-500 hover:text-gray-900 text-sm transition-colors">Features</a>
+                <a href="#" class="text-gray-500 hover:text-gray-900 text-sm transition-colors">Pricing</a>
+                <a href="#" class="text-gray-500 hover:text-gray-900 text-sm transition-colors">Contact</a>
+                <a href="#" class="text-gray-500 hover:text-gray-900 text-sm transition-colors">Privacy</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Onboarding Modal -->
+    <div id="onboarding-modal" class="fixed inset-0 z-[100] hidden items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity duration-300 opacity-0" id="modal-backdrop" onclick="closeModal()"></div>
+        
+        <!-- Modal Container -->
+        <div class="relative w-full max-w-md mx-4 sm:mx-auto">
+            <div class="bg-white rounded-3xl shadow-2xl p-10 relative overflow-hidden transition-all duration-350 transform scale-[0.94] opacity-0" id="modal-content">
+                
+                <button onclick="closeModal()" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all z-20">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+
+                <!-- Progress Dots (Hidden in SignIn Mode) -->
+                <div class="flex justify-center gap-2 mb-8 relative z-10" id="modal-progress">
+                    <div class="w-10 h-1.5 rounded-full bg-[#1B6C42] transition-all duration-500"></div>
+                    <div class="w-10 h-1.5 rounded-full bg-gray-200 transition-all duration-500" id="dot-2"></div>
+                    <div class="w-10 h-1.5 rounded-full bg-gray-200 transition-all duration-500" id="dot-3"></div>
+                </div>
+
+                <div class="relative w-full h-[320px]">
+                    
+                    <!-- Step 1: Auth -->
+                    <div id="modal-step-1" class="absolute inset-0 w-full transition-all duration-300 ease-in-out transform translate-x-0 opacity-100 flex flex-col justify-center">
+                        <h3 id="modal-title-1" class="font-playfair text-2xl font-semibold text-[#111827] text-center tracking-tight">Welcome to Sapling</h3>
+                        <p id="modal-subtitle-1" class="text-gray-500 text-center text-sm mt-2 font-light">Start your learning journey</p>
+                        
+                        <button onclick="handleGoogleContinue()" class="mt-8 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 w-full py-3.5 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 text-sm font-medium shadow-sm">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg>
+                            Continue with Google
+                        </button>
+
+                        <div class="flex items-center gap-4 my-6">
+                            <div class="flex-1 h-[1px] bg-gray-200"></div>
+                            <span class="text-gray-400 text-[11px] font-medium uppercase">or</span>
+                            <div class="flex-1 h-[1px] bg-gray-200"></div>
+                        </div>
+
+                        <input type="email" placeholder="your@email.com" class="bg-gray-50 border border-gray-200 focus:border-[#1B6C42] focus:ring-2 focus:ring-[#1B6C42]/20 rounded-xl px-4 py-3 text-[#111827] placeholder:text-gray-400 w-full outline-none transition-all text-sm mb-3">
+                        
+                        <button onclick="handleEmailContinue()" class="w-full bg-[#1B6C42] text-white py-3.5 rounded-xl font-medium text-sm hover:bg-[#155A35] shadow-sm transition-all duration-300">
+                            Continue
+                        </button>
+
+                        <p class="text-center text-gray-500 text-xs mt-6">
+                            <span id="modal-footer-text">Already have an account? </span>
+                            <button onclick="toggleSignInMode()" id="modal-footer-link" class="text-[#1B6C42] font-medium hover:underline cursor-pointer">Sign in</button>
+                        </p>
+                    </div>
+
+                    <!-- Step 2: School Info -->
+                    <div id="modal-step-2" class="absolute inset-0 w-full transition-all duration-300 ease-in-out transform translate-x-[30px] opacity-0 pointer-events-none flex flex-col justify-center">
+                        <h3 class="font-playfair text-2xl font-semibold text-[#111827] text-center tracking-tight">About You</h3>
+                        <p class="text-gray-500 text-center text-sm mt-2 mb-8 font-light">Help us personalize your experience</p>
+                        
+                        <div class="relative mb-4">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+                            <input type="text" placeholder="Search your university..." class="bg-gray-50 border border-gray-200 focus:border-[#1B6C42] focus:ring-2 focus:ring-[#1B6C42]/20 rounded-xl pl-10 pr-4 py-3 text-[#111827] placeholder:text-gray-400 w-full outline-none transition-all text-sm">
+                        </div>
+
+                        <div class="relative mb-6">
+                            <select class="appearance-none bg-gray-50 border border-gray-200 focus:border-[#1B6C42] focus:ring-2 focus:ring-[#1B6C42]/20 rounded-xl px-4 py-3 text-[#111827] w-full outline-none transition-all text-sm cursor-pointer invalid:text-gray-400" required="">
+                                <option value="" disabled="" selected="" hidden="">Select class year</option>
+                                <option value="freshman">Freshman</option>
+                                <option value="sophomore">Sophomore</option>
+                                <option value="junior">Junior</option>
+                                <option value="senior">Senior</option>
+                                <option value="graduate">Graduate</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <i data-lucide="chevron-down" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none"></i>
+                        </div>
+
+                        <button onclick="nextStep(3)" class="w-full bg-[#1B6C42] text-white py-3.5 rounded-xl font-medium text-sm hover:bg-[#155A35] shadow-sm transition-all duration-300">
+                            Continue
+                        </button>
+                    </div>
+
+                    <!-- Step 3: Classes -->
+                    <div id="modal-step-3" class="absolute inset-0 w-full transition-all duration-300 ease-in-out transform translate-x-[30px] opacity-0 pointer-events-none flex flex-col justify-center">
+                        <h3 class="font-playfair text-2xl font-semibold text-[#111827] text-center tracking-tight">Your Classes</h3>
+                        <p class="text-gray-500 text-center text-sm mt-2 mb-8 font-light">What are you studying this semester?</p>
+                        
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="class-input" placeholder="Add a class..." class="flex-1 bg-gray-50 border border-gray-200 focus:border-[#1B6C42] focus:ring-2 focus:ring-[#1B6C42]/20 rounded-xl px-4 py-3 text-[#111827] placeholder:text-gray-400 outline-none transition-all text-sm">
+                            <button onclick="addClass()" class="bg-[#1B6C42]/10 hover:bg-[#1B6C42]/20 text-[#1B6C42] px-5 rounded-xl text-sm font-medium transition-all">Add</button>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 mb-4 min-h-[42px]" id="class-chips-container">
+                            <!-- JS will inject chips here -->
+                        </div>
+
+                        <div class="mb-8 flex items-center flex-wrap gap-2">
+                            <span class="text-gray-400 text-xs mr-2 font-medium">Popular:</span>
+                            <span onclick="addSuggested('CS 101')" class="border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full px-3 py-1.5 text-xs cursor-pointer transition-all">CS 101</span>
+                            <span onclick="addSuggested('Calculus I')" class="border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full px-3 py-1.5 text-xs cursor-pointer transition-all">Calculus I</span>
+                            <span onclick="addSuggested('Physics I')" class="border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-full px-3 py-1.5 text-xs cursor-pointer transition-all">Physics I</span>
+                        </div>
+
+                        <button onclick="closeModal()" class="w-full bg-[#1B6C42] text-white py-3.5 rounded-xl font-medium text-sm hover:bg-[#155A35] shadow-sm transition-all duration-300">
+                            Launch Sapling 🌱
+                        </button>
+                        <button onclick="closeModal()" class="w-full text-center text-gray-400 hover:text-gray-600 text-xs mt-3 cursor-pointer transition-colors">Skip for now</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- 1. Scramble Text Effect on Mount ---
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!<>-_\\/[]{}—=+*^?#_";
+        function scrambleText(elementId, finalString, totalDuration) {
+            const el = document.getElementById(elementId);
+            if(!el) return;
+            let start = Date.now();
+            
+            let interval = setInterval(() => {
+                let now = Date.now();
+                let progress = (now - start) / totalDuration;
+                if (progress >= 1) {
+                    el.innerText = finalString;
+                    clearInterval(interval);
+                    return;
+                }
+                
+                let scrambled = finalString.split('').map((char, index) => {
+                    if (char === ' ' || char === '\n') return char;
+                    if (progress > index / finalString.length) return char;
+                    return chars[Math.floor(Math.random() * chars.length)];
+                }).join('');
+                el.innerText = scrambled;
+            }, 30);
+        }
+
+        // --- 2. 3D Canvas Graph (Light Theme adaptation) ---
+        const canvas = document.getElementById('hero-canvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); 
+        let width, height;
+        let nodes = [];
+        
+        // Colors mapping from the provided dashboard image
+        const colorPalette = [
+            { c: '#8A63D2', weight: 0.25 }, // Purple
+            { c: '#3B82F6', weight: 0.25 }, // Blue
+            { c: '#D97706', weight: 0.20 }, // Orange
+            { c: '#14B8A6', weight: 0.15 }, // Teal
+            { c: '#D1D5DB', weight: 0.15 }  // Ghostly/unexplored (Gray)
+        ];
+        
+        function getRandomColor() {
+            let r = Math.random();
+            let sum = 0;
+            for(let p of colorPalette) {
+                sum += p.weight;
+                if(r <= sum) return p.c;
+            }
+            return colorPalette[0].c;
+        }
+
+        let rotationAngle = 0;
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * window.devicePixelRatio;
+            canvas.height = height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function initNodes() {
+            nodes = [];
+            const numNodes = 130; 
+            for(let i=0; i<numNodes; i++) {
+                const clusterCenters = [
+                    {x: 200, y: -100, z: 100}, {x: -250, y: 150, z: -50},
+                    {x: 0, y: -200, z: -200}, {x: 300, y: 200, z: 150},
+                    {x: -150, y: -250, z: 200}, {x: 100, y: 300, z: -100}
+                ];
+                const cluster = clusterCenters[Math.floor(Math.random() * clusterCenters.length)];
+                
+                const spread = 180;
+                nodes.push({
+                    ox: cluster.x + (Math.random()-0.5) * spread,
+                    oy: cluster.y + (Math.random()-0.5) * spread,
+                    oz: cluster.z + (Math.random()-0.5) * spread,
+                    color: getRandomColor(),
+                    radius: 1 + Math.random() * 4,
+                    seed: Math.random() * 100
+                });
+            }
+        }
+        initNodes();
+
+        let parallaxYOffset = 0;
+        let mouseX = 0;
+        let mouseY = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / width - 0.5) * 2;
+            mouseY = (e.clientY / height - 0.5) * 2;
+        });
+
+        function drawGraph() {
+            // Light base background
+            ctx.fillStyle = '#E9EFED';
+            ctx.fillRect(0, 0, width, height);
+
+            rotationAngle += 0.0008; 
+            const focalLength = 1000;
+            const cx = width / 2;
+            const cy = height / 2;
+
+            let projectedNodes = [];
+            const time = Date.now() * 0.001;
+
+            nodes.forEach((node) => {
+                let y = node.oy + Math.sin(time * 0.4 + node.seed) * 15;
+                let x = node.ox * Math.cos(rotationAngle) - node.oz * Math.sin(rotationAngle);
+                let z = node.oz * Math.cos(rotationAngle) + node.ox * Math.sin(rotationAngle);
+
+                x -= mouseX * (z + focalLength) * 0.02;
+                y -= mouseY * (z + focalLength) * 0.02;
+
+                const scale = focalLength / (focalLength + z);
+                const x2d = x * scale + cx;
+                const y2d = y * scale + cy - parallaxYOffset; 
+
+                projectedNodes.push({ x: x2d, y: y2d, z, scale, node });
+            });
+
+            projectedNodes.sort((a, b) => b.z - a.z);
+
+            // Connect nearby nodes
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.lineWidth = 0.5;
+            for(let i=0; i<projectedNodes.length; i++) {
+                for(let j=i+1; j<projectedNodes.length; j++) {
+                    const p1 = projectedNodes[i];
+                    const p2 = projectedNodes[j];
+                    const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+                    if(dist < 70 * p1.scale) {
+                        const alpha = (1 - dist/(70 * p1.scale)) * 0.15 * Math.min(1, p1.scale);
+                        ctx.strokeStyle = `rgba(156, 163, 175, ${alpha})`; // gray-400
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Draw Nodes
+            projectedNodes.forEach(p => {
+                if(p.z > -focalLength) {
+                    const breathe = 0.92 + 0.08 * Math.sin(time * 0.6 + p.node.seed);
+                    const r = p.node.radius * p.scale * breathe;
+                    
+                    if(r > 0.1) {
+                        const fogZ = 500;
+                        let alpha = 1;
+                        if(p.z > fogZ) alpha = Math.max(0, 1 - (p.z - fogZ)/500);
+
+                        ctx.globalAlpha = alpha;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+                        ctx.fillStyle = p.node.color;
+                        ctx.fill();
+                    }
+                }
+            });
+
+            ctx.globalAlpha = 1;
+            requestAnimationFrame(drawGraph);
+        }
+        drawGraph();
+
+        // --- 3. Scroll Interactions & Parallax ---
+        const heroContent = document.getElementById('hero-content');
+        const floatingCards = document.querySelectorAll('.floating-card');
+        const navbar = document.getElementById('navbar');
+
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+            
+            if(scrollY < window.innerHeight) {
+                heroContent.style.transform = `translateY(${scrollY * -0.3}px)`;
+                parallaxYOffset = scrollY * 0.1;
+            }
+
+            if(scrollY > 60) {
+                navbar.classList.add('shadow-sm', 'bg-white/90');
+                navbar.classList.remove('bg-[#E9EFED]/80');
+            } else {
+                navbar.classList.remove('shadow-sm', 'bg-white/90');
+                navbar.classList.add('bg-[#E9EFED]/80');
+            }
+        });
+
+        // Floating Cards Logic
+        function animateFloatingCards() {
+            const time = Date.now();
+            floatingCards.forEach(card => {
+                const baseRot = parseFloat(card.getAttribute('data-base-rot'));
+                const dur = parseFloat(card.getAttribute('data-float-dur'));
+                const delay = parseFloat(card.getAttribute('data-float-delay'));
+                
+                const floatY = Math.sin((time - delay) / dur * Math.PI * 2) * -8;
+                const rotateX = -mouseY * 5;
+                const rotateY = mouseX * 5;
+                const cardParallax = window.scrollY * -0.3;
+
+                card.style.transform = `perspective(1000px) translateY(${floatY + cardParallax}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${baseRot}deg)`;
+            });
+            requestAnimationFrame(animateFloatingCards);
+        }
+        animateFloatingCards();
+
+        // --- 4. Observers (Mount Animations) ---
+        setTimeout(() => {
+            document.querySelectorAll('.hero-anim').forEach((el) => {
+                el.classList.remove('opacity-0', 'translate-y-[25px]');
+            });
+            scrambleText('hero-title-1', 'Grow Your', 1000);
+            setTimeout(()=>scrambleText('hero-title-2', 'Knowledge', 1200), 200);
+            
+            navbar.classList.remove('opacity-0', '-translate-y-[30px]');
+            document.getElementById('scroll-indicator').classList.remove('opacity-0');
+
+            floatingCards.forEach((card, i) => {
+                setTimeout(() => {
+                    card.classList.remove('opacity-0', 'scale-90');
+                }, 800 + i*200);
+            });
+        }, 300);
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.remove('opacity-0', 'translate-y-[30px]');
+                    if(entry.target.classList.contains('stat-fade-up')) {
+                        startCounters(entry.target);
+                    }
+                    sectionObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.2 });
+
+        document.querySelectorAll('.fade-up, .stat-fade-up').forEach(el => {
+            el.classList.add('opacity-0', 'translate-y-[30px]', 'transition-all', 'duration-700', 'ease-out');
+            sectionObserver.observe(el);
+        });
+
+        document.querySelectorAll('.spotlight-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+                card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+            });
+        });
+
+        // --- 5. Sticky Scroll Cinema ---
+        const stickySection = document.getElementById('how-it-works');
+        const s1c = document.getElementById('step-1-content');
+        const s2c = document.getElementById('step-2-content');
+        const s3c = document.getElementById('step-3-content');
+        const stepNum = document.getElementById('step-number-bg');
+
+        window.addEventListener('scroll', () => {
+            const rect = stickySection.getBoundingClientRect();
+            const progress = Math.max(0, Math.min(1, -rect.top / (rect.height - window.innerHeight)));
+
+            function activateStep(c, num) {
+                c.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[60px]', '-translate-y-[60px]');
+                stepNum.textContent = num;
+            }
+            function deactivateStepTop(c) {
+                c.classList.add('opacity-0', 'pointer-events-none', '-translate-y-[60px]');
+                c.classList.remove('translate-y-[60px]');
+            }
+            function deactivateStepBottom(c) {
+                c.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[60px]');
+                c.classList.remove('-translate-y-[60px]');
+            }
+
+            if(progress < 0.33) {
+                activateStep(s1c, '01'); 
+                deactivateStepBottom(s2c); 
+                deactivateStepBottom(s3c);
+            } else if (progress >= 0.33 && progress < 0.66) {
+                deactivateStepTop(s1c); 
+                activateStep(s2c, '02'); 
+                deactivateStepBottom(s3c);
+            } else {
+                deactivateStepTop(s1c); 
+                deactivateStepTop(s2c); 
+                activateStep(s3c, '03');
+            }
+        });
+
+        // --- 6. Counters ---
+        function startCounters(container) {
+            container.querySelectorAll('.counter, .counter-float').forEach(counter => {
+                if(counter.classList.contains('counted')) return;
+                counter.classList.add('counted');
+                
+                const target = parseFloat(counter.getAttribute('data-target'));
+                const duration = 1500;
+                const startTime = performance.now();
+                const isFloat = counter.classList.contains('counter-float');
+
+                function update(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const p = Math.min(elapsed / duration, 1);
+                    const ease = 1 - Math.pow(1 - p, 4); 
+                    const current = target * ease;
+                    
+                    counter.textContent = isFloat ? current.toFixed(1) : Math.floor(current).toLocaleString();
+                    if(p < 1) requestAnimationFrame(update);
+                    else counter.textContent = isFloat ? target.toFixed(1) : target.toLocaleString();
+                }
+                requestAnimationFrame(update);
+            });
+        }
+
+        // --- 7. Modal State Logic ---
+        const modal = document.getElementById('onboarding-modal');
+        const backdrop = document.getElementById('modal-backdrop');
+        const content = document.getElementById('modal-content');
+        
+        let isSignInMode = false;
+        
+        function openModal(mode) {
+            isSignInMode = (mode === 'signin');
+            
+            document.getElementById('modal-title-1').innerText = isSignInMode ? "Welcome back" : "Welcome to Sapling";
+            document.getElementById('modal-subtitle-1').innerText = isSignInMode ? "Sign in to continue" : "Start your learning journey";
+            document.getElementById('modal-footer-text').innerText = isSignInMode ? "Don't have an account? " : "Already have an account? ";
+            document.getElementById('modal-footer-link').innerText = isSignInMode ? "Get started" : "Sign in";
+            document.getElementById('modal-progress').style.display = isSignInMode ? 'none' : 'flex';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            void modal.offsetWidth; 
+            backdrop.classList.remove('opacity-0');
+            content.classList.remove('scale-[0.94]', 'opacity-0');
+            resetSteps();
+        }
+
+        function closeModal() {
+            backdrop.classList.add('opacity-0');
+            content.classList.add('scale-[0.94]', 'opacity-0');
+            setTimeout(() => { 
+                modal.classList.remove('flex');
+                modal.classList.add('hidden'); 
+            }, 300);
+        }
+
+        function toggleSignInMode() {
+            isSignInMode = !isSignInMode;
+            openModal(isSignInMode ? 'signin' : 'signup');
+        }
+
+        function resetSteps() {
+            document.getElementById('modal-step-1').className = 'absolute inset-0 w-full transition-all duration-300 ease-in-out transform translate-x-0 opacity-100 flex flex-col justify-center';
+            document.getElementById('modal-step-2').className = 'absolute inset-0 w-full transition-all duration-300 ease-in-out transform translate-x-[30px] opacity-0 pointer-events-none flex flex-col justify-center';
+            document.getElementById('modal-step-3').className = 'absolute inset-0 w-full transition-all duration-300 ease-in-out transform translate-x-[30px] opacity-0 pointer-events-none flex flex-col justify-center';
+            document.getElementById('dot-2').className = 'w-10 h-1.5 rounded-full bg-gray-200 transition-all duration-500';
+            document.getElementById('dot-3').className = 'w-10 h-1.5 rounded-full bg-gray-200 transition-all duration-500';
+        }
+
+        function handleGoogleContinue() {
+            if(isSignInMode) closeModal(); else nextStep(2);
+        }
+        function handleEmailContinue() {
+            if(isSignInMode) closeModal(); else nextStep(2);
+        }
+
+        function nextStep(step) {
+            const s1 = document.getElementById('modal-step-1');
+            const s2 = document.getElementById('modal-step-2');
+            const s3 = document.getElementById('modal-step-3');
+
+            if(step === 2) {
+                s1.classList.replace('translate-x-0', '-translate-x-[30px]');
+                s1.classList.replace('opacity-100', 'opacity-0');
+                s1.classList.add('pointer-events-none');
+                
+                s2.classList.replace('translate-x-[30px]', 'translate-x-0');
+                s2.classList.replace('opacity-0', 'opacity-100');
+                s2.classList.remove('pointer-events-none');
+                
+                document.getElementById('dot-2').classList.replace('bg-gray-200', 'bg-[#1B6C42]');
+                document.getElementById('modal-progress').children[0].classList.replace('bg-[#1B6C42]', 'bg-[#1B6C42]/30');
+            } else if (step === 3) {
+                s2.classList.replace('translate-x-0', '-translate-x-[30px]');
+                s2.classList.replace('opacity-100', 'opacity-0');
+                s2.classList.add('pointer-events-none');
+                
+                s3.classList.replace('translate-x-[30px]', 'translate-x-0');
+                s3.classList.replace('opacity-0', 'opacity-100');
+                s3.classList.remove('pointer-events-none');
+                
+                document.getElementById('dot-3').classList.replace('bg-gray-200', 'bg-[#1B6C42]');
+                document.getElementById('dot-2').classList.replace('bg-[#1B6C42]', 'bg-[#1B6C42]/30');
+            }
+        }
+
+        // Classes Chips Logic
+        const classInput = document.getElementById('class-input');
+        const chipsContainer = document.getElementById('class-chips-container');
+        
+        function addClass() {
+            const val = classInput.value.trim();
+            if(val) {
+                createChip(val);
+                classInput.value = '';
+            }
+        }
+
+        classInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') { e.preventDefault(); addClass(); }
+        });
+
+        function addSuggested(name) {
+            createChip(name);
+        }
+
+        function createChip(name) {
+            const div = document.createElement('div');
+            div.className = 'bg-gray-100 border border-gray-200 rounded-full px-4 py-2 text-gray-700 text-sm flex items-center gap-2 transform scale-95 opacity-0 transition-all duration-300';
+            div.innerHTML = `${name} <button class="text-gray-400 hover:text-gray-600 ml-1 transition-colors" onclick="this.parentElement.remove()"><i data-lucide="x-circle" class="w-4 h-4"></i></button>`;
+            chipsContainer.appendChild(div);
+            lucide.createIcons();
+            
+            requestAnimationFrame(() => {
+                div.classList.remove('scale-95', 'opacity-0');
+            });
+        }
+    </script>
+
+</body></html>
