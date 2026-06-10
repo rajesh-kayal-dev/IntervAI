@@ -3,7 +3,8 @@ uvicorn
 pydantic
 python-dotenv
 ollama
-openai-whisper 
+faster-whisper
+edge-tts
 pydub 
 ffmpeg-python
 python-multipart

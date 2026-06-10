@@ -12,13 +12,21 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import Optional
 import ollama
-from pydub import AudioSegment
+import io
+import re
+
+try:
+    from pydub import AudioSegment
+    HAS_PYDUB = True
+except ImportError:
+    AudioSegment = None
+    HAS_PYDUB = False
+    print("Warning: pydub not available, old transcribe endpoint will not work")
 
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-# Load Faster-Whisper model globally to avoid loading on every request
 try:
     print("Loading Faster-Whisper Model (Base) ...")
     whisper_model = WhisperModel("base", device="auto", compute_type="int8")
@@ -47,7 +55,6 @@ class QuestionResquest(BaseModel):
     count:int=5
     interview_type:str="coding-mix"
 
-
 class QuestionResponse(BaseModel):
     questions:list[str]
     model_used:str
@@ -67,12 +74,12 @@ class EvaluationResponse(BaseModel):
     idealAnswer:str
 
 class ChatMessage(BaseModel):
-    role: str  # "user" or "assistant"
+    role: str
     content: str
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage]
-    context: Optional[str] = None  # current question context
+    context: Optional[str] = None
 
 class ChatResponse(BaseModel):
     reply: str
@@ -97,6 +104,7 @@ class SimulationChatRequest(BaseModel):
 class SimulationChatResponse(BaseModel):
     reply: str
     audioBase64: str | None = None
+    videoBase64: str | None = None
     model_used: str
 
 class SimulationReportRequest(BaseModel):
@@ -112,20 +120,17 @@ class SimulationReportResponse(BaseModel):
 async def root():
     return {"message":"Hello from AI Interviewer Microservice !","model":OLLAMA_MODEL_NAME}
 
-
 @app.post("/generate-questions",response_model=QuestionResponse)
 async def generate_questions(request:QuestionResquest):
-   
     try:
         if request.interview_type=="coding-mix":
             coding_count=int(request.count*0.2)
             oral_oral=int(request.count)-int(coding_count)
-
             intruction=(
                 f"The first {coding_count} questions MUST be coding challenge requiring function implementation."
                 f"The remaining {oral_oral} questions MUST be conceptual oral questions."
             )
-        else :
+        else:
             intruction="All questions MUST be conceptual oral questions. Do Not generate any coding or implementation challenges."
 
         system_prompt=(
@@ -151,7 +156,7 @@ async def generate_questions(request:QuestionResquest):
 
     except Exception as e:
         raise HTTPException(status_code=500,detail=str(e))
-    
+
 @app.post("/generate-quiz", response_model=QuizResponse)
 async def generate_quiz(request: QuizRequest):
     try:
@@ -175,16 +180,14 @@ async def generate_quiz(request: QuizRequest):
         )
 
         raw_text = response['response'].strip()
-        
+
         try:
             questions_data = json.loads(raw_text)
-            # if the model returned an object with a 'questions' key instead of a raw array, handle it
             if isinstance(questions_data, dict) and 'questions' in questions_data:
                 questions_data = questions_data['questions']
             if not isinstance(questions_data, list):
                 raise ValueError("AI did not return a JSON array.")
         except json.JSONDecodeError:
-            import re
             fixed_text = re.sub(r'[\r\n\t]', ' ', raw_text)
             try:
                 questions_data = json.loads(fixed_text)
@@ -193,7 +196,6 @@ async def generate_quiz(request: QuizRequest):
             except:
                 raise HTTPException(status_code=500, detail="Failed to parse AI response into JSON array.")
 
-        # Ensure correct formatting
         formatted_questions = []
         for q in questions_data[:request.count]:
             if 'question' in q and 'options' in q and 'correctAnswer' in q:
@@ -209,10 +211,11 @@ async def generate_quiz(request: QuizRequest):
     except Exception as e:
         print("Quiz Gen Error:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
-    
 
 @app.post("/transcribe")
-async def transcribe_audio(file:UploadFile=File(...)):
+async def transcribe_audio_old(file:UploadFile=File(...)):
+    if not HAS_PYDUB:
+        raise HTTPException(status_code=500, detail="pydub not available for audio conversion")
     try:
         audio_bytes=await file.read()
         audio_in_memory=io.BytesIO(audio_bytes)
@@ -220,13 +223,14 @@ async def transcribe_audio(file:UploadFile=File(...)):
         with tempfile.NamedTemporaryFile(delete=False,suffix=".mp3") as tmp:
             temp_audio_path=tmp.name
             audio_segment.export(temp_audio_path,format="mp3")
-        if not WHISPER_MODEL:
+        if not whisper_model:
             raise HTTPException(status_code=503,detail="Whisper Model is not loaded")
-        
-        result=WHISPER_MODEL.transcribe(temp_audio_path)
-                
+
+        segments, _ = whisper_model.transcribe(temp_audio_path)
+        text = " ".join([segment.text for segment in segments])
+
         os.remove(temp_audio_path)
-        return {"transcription":result["text"].strip()}
+        return {"transcription": text.strip()}
 
     except Exception as e:
         if 'temp_audio_path' in locals() and os.path.exists(temp_audio_path):
@@ -248,7 +252,7 @@ async def evaluate(request:EvaluationRequest):
                 "Use the transcription only for insight into their thought process. "
                 "CRITICAL: If the code is 'udefined',empty, just random comments, or random characters, SCORE 0."
             )
-        
+
         system_prompt=(
             "You are a sstrict technical interviewer. "
             "Do NOT hallucinate positive reviews for bad input. "
@@ -259,7 +263,6 @@ async def evaluate(request:EvaluationRequest):
             "Required keys: 'technicalScore' (0-100), 'confidenceScore' (0-100), 'aiFeedback', 'idealAnswer'. "
         )
         user_prompt=(
-           
             f"Role: {request.role}\n"
             f"Question: {request.question}\n"
             f"Level: {request.level}\n"
@@ -280,14 +283,13 @@ async def evaluate(request:EvaluationRequest):
                 evaluation_data['idealAnswer']=json.dumps(evaluation_data['idealAnswer'])
             return EvaluationResponse(**evaluation_data)
         except json.JSONDecodeError:
-            import re
             fixed_text=re.sub(r'[\r\n\t]',' ',response_text)
-            try :
+            try:
                 evaluation_data=json.loads(fixed_text)
                 if 'idealAnswer' in evaluation_data and not isinstance(evaluation_data['idealAnswer'],str):
                     evaluation_data['idealAnswer']=json.dumps(evaluation_data['idealAnswer'])
                 return EvaluationResponse(**evaluation_data)
-            except :
+            except:
                 print(f"Failed to parse response: {response_text}")
                 return EvaluationResponse(technicalScore=0,confidenceScore=0,aiFeedback="Failed to parse response",idealAnswer="Failed to parse response")
 
@@ -297,7 +299,7 @@ async def evaluate(request:EvaluationRequest):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """IntervBot – an AI helper for interview prep questions."""
+    """IntervBot - an AI helper for interview prep questions."""
     try:
         system_prompt = (
             "You are IntervBot, a friendly and expert AI assistant built into the IntervAI interview preparation platform. "
@@ -305,12 +307,11 @@ async def chat(request: ChatRequest):
             "and answer any technical questions during their interview practice session. "
             "Be concise, clear, and encouraging. Use code examples where helpful. "
             "If someone pastes code, review it and explain improvements. "
-            "Never give direct answers to interview questions — instead, guide the user to think through the solution."
+            "Never give direct answers to interview questions - instead, guide the user to think through the solution."
         )
         if request.context:
             system_prompt += f"\n\nCurrent interview question context:\n{request.context}"
 
-        # Build a single prompt from conversation history (same pattern as working endpoints)
         conversation_prompt = ""
         for msg in request.messages:
             if msg.role == "user":
@@ -335,56 +336,106 @@ async def chat(request: ChatRequest):
 async def simulation_chat(request: SimulationChatRequest):
     try:
         config = request.config
-        
-        system_prompt = (
-            f"You are {config.get('personality', 'an Interviewer')}. "
-            f"You are conducting a {config.get('interviewType', 'Technical')} interview for a {config.get('experienceLevel', 'Mid-Level')} {config.get('targetRole', 'Developer')}. "
-            f"Company context: {config.get('companyContext', 'None provided')}. "
-            f"Job Description: {config.get('jobDescription', 'None provided')}. "
-            f"Candidate Resume Data: {request.resumeText[:1000]}... "
-            "CRITICAL INSTRUCTIONS: "
-            "1. You are speaking in a live video call. DO NOT output markdown, bullet points, or code blocks. Speak naturally. "
-            "2. Keep your response short (1 to 3 sentences maximum). "
-            "3. Ask ONLY ONE question at a time. "
-            "4. Acknowledge their previous answer briefly, provide subtle feedback, and smoothly transition to the next question. "
-            "5. If it's the very first message, introduce yourself naturally, reference their profile, and ask if they are ready."
-        )
+        resume = request.resumeText[:1500] if request.resumeText else "No resume provided"
+        company = config.get('companyContext', 'No company context')
+        jd = config.get('jobDescription', 'No job description')
+        focus = config.get('focusAreas', '')
+        target_role = config.get('targetRole', 'Developer')
+        exp_level = config.get('experienceLevel', 'Mid-Level')
+        interview_type = config.get('interviewType', 'Technical')
+        personality = config.get('personality', 'Interviewer')
+        gender = config.get('gender', 'Female')
+        interviewer_name = config.get('interviewerName') or personality
+        interviewer_title = config.get('interviewerTitle') or f"{interview_type.lower()} interviewer"
+        candidate_name = config.get('candidateName', 'there')
+
+        # Build context with memory of previous answers
+        history = request.history
+        transcript_text = ""
+        for msg in history:
+            transcript_text += f"{msg['role'].upper()}: {msg['content']}\n"
+
+        is_first_message = len(history) <= 1
+
+        if is_first_message:
+            system_prompt = (
+                f"You are {interviewer_name}, a professional {interviewer_title} at a leading technology company. "
+                f"You are conducting a {exp_level} {target_role} interview with {candidate_name}. "
+                f"\n\nCOMPANY CONTEXT: {company}"
+                f"\nJOB DESCRIPTION: {jd}"
+                f"\nFOCUS AREAS: {focus}"
+                f"\n\nABOUT THE CANDIDATE (from resume): {resume}"
+                f"\n\nCRITICAL BEHAVIORAL RULES:"
+                f"\n1. This is a LIVE VIDEO INTERVIEW. Speak naturally - do NOT use markdown, bullet points, or code blocks."
+                f"\n2. Introduce yourself naturally: say 'Hello, I'm {interviewer_name}, and I'll be your {interviewer_title} today.' Then welcome {candidate_name}."
+                f"\n3. Reference the candidate's background from their resume to show you've prepared."
+                f"\n4. Your voice is warm, professional, and confident. Sound like a real human interviewer."
+                f"\n5. End by asking if they are ready to begin."
+                f"\n6. Keep your introduction to 4-5 sentences maximum."
+            )
+        else:
+            system_prompt = (
+                f"You are {interviewer_name}, a professional {interviewer_title}. "
+                f"\n\nCONTEXT: You are interviewing {candidate_name} for {target_role} ({exp_level})."
+                f"\nCompany: {company}"
+                f"\nFocus Areas: {focus}"
+                f"\nCandidate Resume: {resume}"
+                f"\n\nTRANSCRIPT SO FAR:\n{transcript_text}"
+                f"\n\nCRITICAL BEHAVIORAL RULES:"
+                f"\n1. This is a LIVE VIDEO INTERVIEW. Speak naturally. No markdown or bullet points."
+                f"\n2. REACT TO THE CANDIDATE'S LAST ANSWER FIRST before moving on."
+                f"\n3. Acknowledge their answer naturally (e.g., 'That's a great point.', 'Interesting approach.', 'I like how you handled that.')"
+                f"\n4. Ask ONE follow-up question related to their last answer."
+                f"\n5. If the candidate mentioned something interesting (a project, a technology, an experience), DRILL DEEPER into it."
+                f"\n6. Reference their earlier answers when relevant (e.g., 'Earlier you mentioned...')."
+                f"\n7. Never ask generic questions. Every question must be contextual."
+                f"\n8. Keep responses to 2-3 sentences."
+                f"\n9. If the technical topic allows, ask about architecture decisions, trade-offs, and real-world experience."
+                f"\n10. Never interrupt. Let the conversation flow naturally."
+            )
 
         ollama_messages = [{"role": "system", "content": system_prompt}]
-        
+
         for msg in request.history:
             role = "assistant" if msg["role"] == "assistant" else "user"
             ollama_messages.append({"role": role, "content": msg["content"]})
-            
-        # If history is empty, the user just joined, so we should trigger the greeting.
+
         if len(request.history) == 0:
-            ollama_messages.append({"role": "user", "content": "I have just joined the room. Please introduce yourself and start the interview."})
+            ollama_messages.append({"role": "user", "content": "I have just joined the interview room. Please introduce yourself and start the interview."})
 
         response = ollama.chat(model=OLLAMA_MODEL_NAME, messages=ollama_messages)
         reply = response['message']['content']
 
+        # Clean up reply - remove markdown formatting
+        reply = re.sub(r'\*\*(.*?)\*\*', r'\1', reply)
+        reply = re.sub(r'__(.*?)__', r'\1', reply)
+        reply = re.sub(r'`(.*?)`', r'\1', reply)
+        reply = re.sub(r'#+\s*', '', reply)
+        reply = reply.strip()
+
         # Generate Voice via Edge-TTS
-        voice = "en-IN-NeerjaNeural" if config.get("gender") == "Female" else "en-IN-PrabhatNeural"
+        voice = "en-IN-NeerjaNeural" if gender == "Female" else "en-IN-PrabhatNeural"
         audio_base64 = None
-        
+
         try:
             communicate = edge_tts.Communicate(reply, voice=voice)
             audio_path = tempfile.mktemp(suffix=".mp3")
             await communicate.save(audio_path)
-            
+
             with open(audio_path, "rb") as f:
                 audio_bytes = f.read()
-            
-            os.remove(audio_path)
+
             audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+            os.remove(audio_path)
         except Exception as tts_err:
             print(f"Edge-TTS Error: {tts_err}")
 
-        return SimulationChatResponse(
-            reply=reply,
-            audioBase64=audio_base64,
-            model_used=OLLAMA_MODEL_NAME
-        )
+        return {
+            "reply": reply,
+            "audioBase64": audio_base64,
+            "videoBase64": None,
+            "model_used": OLLAMA_MODEL_NAME
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -402,35 +453,39 @@ async def transcribe_audio(file: UploadFile = File(...)):
 
         segments, info = whisper_model.transcribe(temp_audio.name, beam_size=5)
         os.remove(temp_audio.name)
-        
+
         text = " ".join([segment.text for segment in segments])
 
         return {"text": text.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.post("/simulation-report", response_model=SimulationReportResponse)
 async def simulation_report(request: SimulationReportRequest):
     try:
         config = request.config
-        
+
+        transcript_text = ""
+        for msg in request.history:
+            transcript_text += f"{msg['role'].upper()}: {msg['content']}\n"
+
         system_prompt = (
             "You are an expert technical recruiter analyzing an interview transcript. "
             "Output MUST be a valid JSON object matching this structure EXACTLY: "
             "{ 'overallScore': number 0-100, 'technicalScore': number 0-100, 'communicationScore': number 0-100, "
             "'confidenceScore': number 0-100, 'problemSolvingScore': number 0-100, "
             "'strengths': [string], 'weaknesses': [string], 'missedOpportunities': [string], "
-            "'suggestedBetterAnswers': [string], 'hiringRecommendation': string, 'learningPlan': [string] }. "
+            "'suggestedBetterAnswers': [string], 'hiringRecommendation': string (2-3 sentences), "
+            "'learningPlan': [string] (5 items, each a specific learning recommendation), "
+            "'interviewerFeedback': string (2-3 sentences of overall feedback from the interviewer's perspective)}. "
             "Do NOT wrap in markdown blocks. Output only raw JSON."
         )
 
-        transcript_text = ""
-        for msg in request.history:
-            transcript_text += f"{msg['role'].upper()}: {msg['content']}\n"
-
         user_prompt = (
-            f"Analyze this transcript for a {config.get('targetRole')} role.\n\n"
+            f"Analyze this transcript for a {config.get('targetRole')} role at {'a company focusing on ' + config.get('companyContext', 'a tech company')}.\n"
+            f"Interview type: {config.get('interviewType', 'Technical')}, "
+            f"Difficulty: {config.get('difficulty', 'Medium')}, "
+            f"Experience level: {config.get('experienceLevel', 'Mid-Level')}.\n\n"
             f"TRANSCRIPT:\n{transcript_text}"
         )
 
@@ -439,7 +494,7 @@ async def simulation_report(request: SimulationReportRequest):
             prompt=f"{system_prompt}\n\n{user_prompt}",
             format='json'
         )
-        
+
         raw_text = response['response'].strip()
         report_data = json.loads(raw_text)
 

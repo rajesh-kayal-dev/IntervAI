@@ -21,7 +21,11 @@ const simulationSessionSchema = new mongoose.Schema({
         personality: { type: String, required: true },
         gender: { type: String, required: true },
         jobDescription: { type: String, default: "" },
-        companyContext: { type: String, default: "" }
+        companyContext: { type: String, default: "" },
+        interviewerId: { type: String, default: "" },
+        interviewerName: { type: String, default: "" },
+        interviewerTitle: { type: String, default: "" },
+        focusAreas: { type: String, default: "" }
     },
     resumeText: {
         type: String,
@@ -43,7 +47,8 @@ const simulationSessionSchema = new mongoose.Schema({
         missedOpportunities: [{ type: String }],
         suggestedBetterAnswers: [{ type: String }],
         hiringRecommendation: { type: String, default: "" },
-        learningPlan: [{ type: String }]
+        learningPlan: [{ type: String }],
+        interviewerFeedback: { type: String, default: "" }
     },
     startedAt: {
         type: Date,

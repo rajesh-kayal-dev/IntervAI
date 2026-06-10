@@ -42,7 +42,10 @@ export const createSession = async (req, res) => {
             interviewerGender,
             jobDescription,
             companyName,
-            focusAreas
+            focusAreas,
+            interviewerId,
+            interviewerName,
+            interviewerTitle
         } = req.body;
 
         let resumeText = "";
@@ -67,7 +70,11 @@ export const createSession = async (req, res) => {
                 personality,
                 gender: interviewerGender || 'Female',
                 jobDescription,
-                companyContext: `${companyName || ''} ${focusAreas ? `(Focus: ${focusAreas})` : ''}`.trim()
+                companyContext: `${companyName || ''} ${focusAreas ? `(Focus: ${focusAreas})` : ''}`.trim(),
+                interviewerId: interviewerId || '',
+                interviewerName: interviewerName || '',
+                interviewerTitle: interviewerTitle || '',
+                focusAreas: focusAreas || ''
             },
             resumeText
         });
@@ -79,37 +86,45 @@ export const createSession = async (req, res) => {
     }
 };
 
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { EdgeTTS } from 'node-edge-tts';
+
 // @desc    Handle chat round
 // @route   POST /api/simulation/:id/chat
 // @access  Private
 export const chatWithInterviewer = async (req, res) => {
     try {
-        const { message } = req.body; // User's transcribed text
+        const { message } = req.body;
         const session = await SimulationSession.findById(req.params.id);
 
         if (!session) {
             return res.status(404).json({ message: "Session not found" });
         }
 
-        // Add user message to transcript
         session.transcript.push({ role: 'user', content: message });
         await session.save();
 
-        // Call Python AI Service
         try {
+            const configWithUser = {
+                ...session.config.toObject ? session.config.toObject() : session.config,
+                candidateName: req.user.name || 'Candidate'
+            };
+
             const aiResponse = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/simulation-chat`, {
-                config: session.config,
+                config: configWithUser,
                 resumeText: session.resumeText,
                 history: session.transcript
             });
 
             const reply = aiResponse.data.reply;
+            const audioBase64 = aiResponse.data.audioBase64;
 
-            // Add AI response to transcript
             session.transcript.push({ role: 'assistant', content: reply });
             await session.save();
 
-            res.status(200).json({ reply });
+            res.status(200).json({ reply, audioBase64 });
         } catch (aiError) {
             console.error("AI Service Error:", aiError.message);
             res.status(500).json({ message: "Error communicating with AI Service" });
@@ -132,7 +147,6 @@ export const finishSimulation = async (req, res) => {
             return res.status(404).json({ message: "Session not found" });
         }
 
-        // Call Python AI Service to generate report
         try {
             const aiResponse = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/simulation-report`, {
                 config: session.config,
@@ -176,5 +190,37 @@ export const getSimulationResult = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+import { generateToken04 } from '../utils/zegoToken.js';
+
+// @desc    Get ZegoCloud credentials
+// @route   GET /api/simulation/zego/credentials
+// @access  Private
+export const getZegoCredentials = async (req, res) => {
+    try {
+        const appId = parseInt(process.env.ZEGOCLOUD_APP_ID);
+        const serverSecret = process.env.ZEGOCLOUD_SERVER_SECRET;
+        const userId = req.user._id.toString();
+
+        const payload = JSON.stringify({
+            privilege: {
+                1: 1,
+                2: 1
+            },
+            stream_id_list: null
+        });
+
+        const token = generateToken04(appId, userId, serverSecret, 86400, payload);
+
+        res.status(200).json({
+            appId,
+            token,
+            userId
+        });
+    } catch (error) {
+        console.error("ZegoCloud Error:", error.message);
+        res.status(500).json({ message: "Server Error getting credentials" });
     }
 };

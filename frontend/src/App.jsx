@@ -17,6 +17,7 @@ import QuizSetup from './pages/QuizSetup';
 import QuizRunner from './pages/QuizRunner';
 import QuizResult from './pages/QuizResult';
 import SimulationSetup from './pages/SimulationSetup';
+import InterviewLobby from './pages/InterviewLobby';
 import ZegoInterviewRoom from './pages/ZegoInterviewRoom';
 import SimulationResult from './pages/SimulationResult';
 import 'react-toastify/dist/ReactToastify.css';
@@ -28,6 +29,7 @@ const App = () => {
 
   const hideHeaderPaths = [
     '/simulation/setup',
+    '/simulation/lobby',
     '/simulation/room/',
     '/quiz/setup',
     '/quiz/run/',
@@ -67,6 +69,7 @@ const App = () => {
             <Route path="/quiz/run/:quizId" element={<QuizRunner />} />
             <Route path="/quiz/result/:quizId" element={<QuizResult />} />
             <Route path="/simulation/setup" element={<SimulationSetup />} />
+            <Route path="/simulation/lobby" element={<InterviewLobby />} />
             <Route path="/simulation/room/:sessionId" element={<ZegoInterviewRoom />} />
             <Route path="/simulation/result/:sessionId" element={<SimulationResult />} />
           </Route>
