@@ -59,6 +59,7 @@ export default function ZegoInterviewRoom() {
   const audioPlayerRef = useRef(null);
   const avatarStateRef = useRef({ mouthOpen: 0, expression: 'neutral' });
   const audioContextRef = useRef(null);
+  const sharedAudioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const silenceTimerRef = useRef(null);
   const isSpeakingRef = useRef(false);
@@ -135,6 +136,13 @@ export default function ZegoInterviewRoom() {
     return () => clearInterval(interval);
   }, [status]);
 
+  // Set video srcObject after loading completes and video element exists
+  useEffect(() => {
+    if (!loading && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [loading]);
+
   // Duration timer
   useEffect(() => {
     if (!loading && session) {
@@ -155,6 +163,7 @@ export default function ZegoInterviewRoom() {
 
   const fetchSession = async () => {
     try {
+      ensureAudioContext();
       const user = JSON.parse(localStorage.getItem('user'));
       const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/simulation/${sessionId}`, {
         headers: { Authorization: `Bearer ${user.token}` }
@@ -535,9 +544,20 @@ export default function ZegoInterviewRoom() {
     window.speechSynthesis.speak(utterance);
   };
 
+  const ensureAudioContext = () => {
+    if (!sharedAudioContextRef.current || sharedAudioContextRef.current.state === 'closed') {
+      sharedAudioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (sharedAudioContextRef.current.state === 'suspended') {
+      sharedAudioContextRef.current.resume();
+    }
+    return sharedAudioContextRef.current;
+  };
+
   const playAIAudio = (base64Audio, replyText, base64Video = null) => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
     }
 
     if (base64Video) {
@@ -560,14 +580,48 @@ export default function ZegoInterviewRoom() {
       }
     };
 
-    const tryPlayAudio = () => {
-      if (base64Audio) {
+    const playViaAudioContext = async () => {
+      try {
+        const audioCtx = ensureAudioContext();
+        const binaryStr = atob(base64Audio);
+        const bytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i);
+        }
+        const audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+        const source = audioCtx.createBufferSource();
+        const analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        analyser.connect(audioCtx.destination);
+        source.start(0);
+        source.onended = onSpeakingDone;
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        const syncLip = () => {
+          analyser.getByteFrequencyData(dataArray);
+          const avg = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+          avatarStateRef.current.mouthOpen = Math.min(1, avg / 128);
+          if (!source.buffer) {
+            avatarStateRef.current.mouthOpen = 0;
+            return;
+          }
+          requestAnimationFrame(syncLip);
+        };
+        syncLip();
+      } catch {
+        throw new Error('AudioContext playback failed');
+      }
+    };
+
+    const playViaHtmlAudio = () => {
+      return new Promise((resolve, reject) => {
         const audioUrl = `data:audio/mp3;base64,${base64Audio}`;
         const audio = new Audio(audioUrl);
         audioPlayerRef.current = audio;
 
         try {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const audioCtx = ensureAudioContext();
           const source = audioCtx.createMediaElementSource(audio);
           const analyser = audioCtx.createAnalyser();
           analyser.fftSize = 256;
@@ -586,16 +640,29 @@ export default function ZegoInterviewRoom() {
             requestAnimationFrame(syncLip);
           };
           audio.addEventListener('play', syncLip);
-          audio.onended = onSpeakingDone;
+          audio.onended = () => { resolve(); onSpeakingDone(); };
         } catch (e) {
-          audio.onended = onSpeakingDone;
+          audio.onended = () => { resolve(); onSpeakingDone(); };
         }
 
-        audio.play().catch(() => {
-          speakWithBrowserTTS(replyText || '', onSpeakingDone);
-        });
-      } else {
+        audio.play().then(resolve).catch(reject);
+      });
+    };
+
+    const tryPlayAudio = async () => {
+      if (!base64Audio) {
         speakWithBrowserTTS(replyText || '', onSpeakingDone);
+        return;
+      }
+
+      try {
+        await playViaAudioContext();
+      } catch {
+        try {
+          await playViaHtmlAudio();
+        } catch {
+          speakWithBrowserTTS(replyText || '', onSpeakingDone);
+        }
       }
     };
 
@@ -757,7 +824,7 @@ export default function ZegoInterviewRoom() {
 
   // ---------- MAIN RENDER ----------
   return (
-    <div ref={containerRef} className="interview-room fixed inset-0 z-50 flex flex-col font-sans" style={{ background: 'var(--ir-bg)' }}>
+    <div ref={containerRef} onClick={ensureAudioContext} className="interview-room fixed inset-0 z-50 flex flex-col font-sans" style={{ background: 'var(--ir-bg)' }}>
 
       {/* ========== TOP NAVIGATION BAR ========== */}
       <div className="glass-card h-14 flex items-center justify-between px-5 shrink-0 z-20" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
