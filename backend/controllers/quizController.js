@@ -199,3 +199,106 @@ export const completeQuiz = asyncHandler(async (req, res) => {
         }
     });
 });
+
+// @desc    Get public quiz result for sharing
+// @route   GET /api/quiz/:id/public
+// @access  Public
+export const getPublicQuizResult = asyncHandler(async (req, res) => {
+    const quiz = await QuizSession.findById(req.params.id).populate('user', 'name');
+    if (!quiz) {
+        res.status(404);
+        throw new Error('Quiz not found');
+    }
+    
+    // Only return safe public data (no answers/explanations)
+    const publicData = {
+        quizId: quiz._id,
+        userName: quiz.user ? quiz.user.name.split(' ')[0] : 'Someone',
+        score: quiz.score,
+        totalQuestions: quiz.questions.length,
+        config: quiz.config,
+        completedAt: quiz.completedAt,
+        accuracy: Math.round((quiz.score / quiz.questions.length) * 100)
+    };
+    
+    res.json(publicData);
+});
+
+// @desc    Skip a question and generate a replacement
+// @route   POST /api/quiz/:id/skip
+// @access  Private
+export const skipQuestion = asyncHandler(async (req, res) => {
+    const { questionIndex } = req.body;
+    const quiz = await QuizSession.findById(req.params.id);
+
+    if (!quiz) {
+        res.status(404);
+        throw new Error('Quiz not found');
+    }
+
+    if (quiz.user.toString() !== req.user._id.toString()) {
+        res.status(401);
+        throw new Error('Not authorized');
+    }
+
+    // Call AI Service for 1 replacement question
+    const aiResponse = await fetch(`${AI_SERVICE_URL}/generate-quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            role: quiz.config.role, 
+            difficulty: quiz.config.difficulty, 
+            topic: quiz.config.topic, 
+            count: 1, 
+            type: quiz.config.quizType 
+        }),
+    });
+
+    if (!aiResponse.ok) {
+        const errorBody = await aiResponse.text();
+        throw new Error(`AI Service error: ${aiResponse.status} - ${errorBody}`);
+    }
+
+    const aiData = await aiResponse.json();
+    const newQuestion = aiData.questions[0];
+
+    // Replace the skipped question with the new one
+    quiz.questions.splice(questionIndex, 1, newQuestion);
+    await quiz.save();
+
+    res.json({
+        message: 'Question replaced successfully',
+        newQuestion,
+        quiz
+    });
+});
+
+// @desc    Generate TTS audio via AI service
+// @route   POST /api/quiz/tts
+// @access  Private
+export const generateTTS = asyncHandler(async (req, res) => {
+    const { text, voice } = req.body;
+    if (!text) {
+        res.status(400);
+        throw new Error('Text is required');
+    }
+
+    try {
+        const aiResponse = await fetch(`${AI_SERVICE_URL}/generate-tts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, voice: voice || 'en-IN-NeerjaNeural' }),
+        });
+
+        if (!aiResponse.ok) {
+            const errorBody = await aiResponse.text();
+            throw new Error(`AI Service TTS error: ${aiResponse.status} - ${errorBody}`);
+        }
+
+        const data = await aiResponse.json();
+        res.json(data);
+    } catch (error) {
+        console.error('TTS Generation Error:', error.message);
+        res.status(500).json({ message: 'Error generating text-to-speech audio' });
+    }
+});

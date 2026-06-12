@@ -124,6 +124,10 @@ class SimulationNotesResponse(BaseModel):
     notes: list[str]
     summary: str
 
+class TTSRequest(BaseModel):
+    text: str
+    voice: str = "en-IN-NeerjaNeural"
+
 @app.get("/")
 async def root():
     return {"message":"Hello from AI Interviewer Microservice !","model":OLLAMA_MODEL_NAME}
@@ -443,6 +447,22 @@ async def simulation_chat(request: SimulationChatRequest):
             "model_used": OLLAMA_MODEL_NAME
         }
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/generate-tts")
+async def generate_tts(request: TTSRequest):
+    try:
+        communicate = edge_tts.Communicate(request.text, voice=request.voice)
+        audio_path = tempfile.mktemp(suffix=".mp3")
+        await communicate.save(audio_path)
+
+        with open(audio_path, "rb") as f:
+            audio_bytes = f.read()
+
+        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
+        os.remove(audio_path)
+        return {"audioBase64": audio_base64}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

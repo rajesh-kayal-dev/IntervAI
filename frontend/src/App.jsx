@@ -16,6 +16,7 @@ import NotFound from './pages/NotFound';
 import QuizSetup from './pages/QuizSetup';
 import QuizRunner from './pages/QuizRunner';
 import QuizResult from './pages/QuizResult';
+import PublicQuizResult from './pages/PublicQuizResult';
 import SimulationSetup from './pages/SimulationSetup';
 import InterviewLobby from './pages/InterviewLobby';
 import ZegoInterviewRoom from './pages/ZegoInterviewRoom';
@@ -33,6 +34,8 @@ const App = () => {
     '/simulation/room/',
     '/quiz/setup',
     '/quiz/run/',
+    '/quiz/result/',
+    '/quiz/share/',
     '/interview/'
   ];
   const shouldHideHeader = hideHeaderPaths.some(path => location.pathname.startsWith(path));
@@ -61,6 +64,7 @@ const App = () => {
           <Route path='/' element={user ? <Dashboard /> : <Landing />} />
           <Route path='/login' element={<Landing autoOpen="signin" />} />
           <Route path='/register' element={<Landing autoOpen="signup" />} />
+          <Route path='/quiz/share/:quizId' element={<PublicQuizResult />} />
           <Route path='/' element={<PrivateRoute />}>
             <Route path='/profile' element={<Profile />} />
             <Route path='/interview/:sessionId' element={<InterviewRunner />} />

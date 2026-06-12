@@ -178,7 +178,7 @@ export default function ZegoInterviewRoom() {
       setupMediaRecorder();
 
       if (data.transcript.length === 0) {
-        setTimeout(() => startInterview(), 2000);
+        setTimeout(() => startInterview(), 100);
       }
     } catch (err) {
       toast.error('Failed to join room');
@@ -203,9 +203,11 @@ export default function ZegoInterviewRoom() {
   const fetchLiveNotes = async (currentSession) => {
     if (!currentSession || !currentSession.config) return;
     try {
+      const user = JSON.parse(localStorage.getItem('user'));
       const { data } = await axios.post(
         `${import.meta.env.VITE_API_URL}/simulation/update-notes`,
-        { config: currentSession.config, history: currentSession.transcript }
+        { config: currentSession.config, history: currentSession.transcript },
+        { headers: { Authorization: `Bearer ${user?.token}` } }
       );
       setLiveNotes(data.notes || []);
       setLiveSummary(data.summary || "Analyzing...");
@@ -251,7 +253,7 @@ export default function ZegoInterviewRoom() {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
-      const serverUrl = `wss://wsliveroom-${creds.appId}.zegocloud.com/ws`;
+      const serverUrl = `wss://webliveroom${creds.appId}-api.zegocloud.com/ws`;
       const zg = new ZegoExpressEngine(creds.appId, serverUrl);
       zgRef.current = zg;
 
@@ -442,7 +444,7 @@ export default function ZegoInterviewRoom() {
                 mediaRecorderRef.current.stop();
               }
               isSpeakingRef.current = false;
-            }, 2000);
+            }, 1000);
           }
         }
         requestAnimationFrame(checkSilence);
@@ -798,90 +800,84 @@ export default function ZegoInterviewRoom() {
       </div>
 
       {/* ========== MAIN CONTENT AREA ========== */}
-      <div className="flex-1 flex overflow-hidden p-4 gap-4">
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-2 lg:p-4 gap-4">
 
         {/* ---- LEFT COLUMN: Video + Meeting Notes (70%) ---- */}
         <div className="flex-1 flex flex-col gap-4 min-w-0">
 
-          {/* Video Container */}
-          <div className="ir-video-container flex-1 relative">
-            {/* AI Interviewer */}
-            {interviewer ? (
-              <div className="w-full h-full">
-                <RealHumanAvatar
-                  profile={interviewer}
-                  isSpeaking={status === STATUS.AI_SPEAKING}
-                  expression={avatarExpression}
-                  stateRef={avatarStateRef}
-                  width={960}
-                  height={640}
-                  videoSrc={avatarVideoSrc}
-                />
-                <div className="ir-avatar-vignette" />
-              </div>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
-                <div className="text-center">
-                  <div className={`w-28 h-28 rounded-full border-4 flex items-center justify-center mx-auto mb-4 ${status === STATUS.AI_SPEAKING ? 'border-indigo-400 bg-indigo-900/40' : 'border-gray-700 bg-gray-800'}`}>
-                    <User className="w-14 h-14 text-gray-500" />
-                  </div>
-                  <p className="text-gray-400 text-lg font-medium">{getStatusLabel(status) || 'Waiting...'}</p>
+          {/* Video Container (Split Screen) */}
+          <div className="flex-1 relative bg-gray-950 rounded-2xl overflow-hidden shadow-xl border border-white/10 flex flex-col sm:flex-row gap-1 p-1">
+            
+            {/* AI Interviewer (Left Screen) */}
+            <div className="flex-1 relative bg-gray-900 rounded-xl overflow-hidden min-h-[300px]">
+              {interviewer ? (
+                <div className="w-full h-full">
+                  <RealHumanAvatar
+                    profile={interviewer}
+                    isSpeaking={status === STATUS.AI_SPEAKING}
+                    expression={avatarExpression}
+                    stateRef={avatarStateRef}
+                    width={960}
+                    height={640}
+                    videoSrc={avatarVideoSrc}
+                  />
+                  <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 40%)' }} />
                 </div>
-              </div>
-            )}
-
-            {/* Interviewer Name Badge (bottom-left overlay) */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
-              <div className="glass-card-dark px-3 py-2 rounded-xl">
-                <div className="flex items-center gap-2.5">
-                  {interviewer?.photoUrl && (
-                    <img src={interviewer.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-white/20" />
-                  )}
-                  <div>
-                    <p className="text-sm text-white font-semibold leading-tight">{interviewer?.fullName || 'AI Interviewer'}</p>
-                    <p className="text-[11px] text-white/60">{interviewer?.title || ''}</p>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center">
+                    <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center mx-auto mb-3 ${status === STATUS.AI_SPEAKING ? 'border-indigo-400 bg-indigo-900/40' : 'border-gray-700 bg-gray-800'}`}>
+                      <User className="w-10 h-10 text-gray-500" />
+                    </div>
+                    <p className="text-gray-400 text-sm font-medium">{getStatusLabel(status) || 'Waiting...'}</p>
                   </div>
-                </div>
-              </div>
-              {/* Speaking wave indicator */}
-              {status === STATUS.AI_SPEAKING && (
-                <div className="glass-card-dark px-2.5 py-2 rounded-xl flex items-center gap-1">
-                  {[0, 1, 2, 3].map(i => (
-                    <div key={i} className="ir-wave-bar bg-blue-400" style={{ animationDelay: `${i * 0.15}s` }} />
-                  ))}
                 </div>
               )}
+
+              {/* Interviewer Name Badge */}
+              <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
+                <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-white font-medium">{interviewer?.fullName || 'AI Interviewer'}</span>
+                  </div>
+                </div>
+                {/* Speaking wave indicator */}
+                {status === STATUS.AI_SPEAKING && (
+                  <div className="bg-black/60 backdrop-blur-md px-2 py-1.5 rounded-lg flex items-center gap-1 border border-white/10">
+                    {[0, 1, 2].map(i => (
+                      <div key={i} className="ir-wave-bar bg-blue-400" style={{ animationDelay: `${i * 0.15}s` }} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* User PIP (top-right overlay) */}
-            <div className="absolute top-4 right-4 w-48 aspect-video ir-pip z-10">
-              {isCameraOn && streamRef.current ? (
+            {/* Candidate / User PIP (Right Screen) */}
+            <div className="flex-1 relative bg-gray-900 rounded-xl overflow-hidden min-h-[300px]">
+              {isCameraOn ? (
                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                  <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-gray-500" />
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center">
+                    <User className="w-10 h-10 text-gray-600" />
                   </div>
                 </div>
               )}
-              <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
-                <span className="text-[11px] text-white bg-black/50 px-2 py-0.5 rounded font-medium">
-                  You
-                </span>
-                {status === STATUS.RECORDING && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
-                {isMuted && (
-                  <span className="bg-red-500/80 p-0.5 rounded">
-                    <MicOff className="w-2.5 h-2.5 text-white" />
-                  </span>
-                )}
+              
+              <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
+                <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 flex items-center gap-2">
+                  <span className="text-sm text-white font-medium">You</span>
+                  {status === STATUS.RECORDING && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
+                  {isMuted && <MicOff className="w-3.5 h-3.5 text-red-400" />}
+                </div>
               </div>
             </div>
 
             {/* Transcript overlay (center-bottom) */}
             {transcript && (
-              <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 pointer-events-none z-10">
-                <div className="ir-transcript-overlay px-5 py-3">
-                  <p className="text-sm text-center leading-relaxed" style={{ color: 'var(--ir-text)' }}>
+              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-3xl px-6 pointer-events-none z-30 transition-all duration-300">
+                <div className="ir-transcript-overlay px-8 py-5 rounded-2xl shadow-2xl backdrop-blur-md" style={{ background: 'rgba(15, 23, 42, 0.85)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <p className="text-xl sm:text-2xl md:text-3xl font-medium text-center leading-relaxed tracking-wide text-white drop-shadow-md transition-all duration-300">
                     {transcript}
                   </p>
                 </div>
@@ -993,7 +989,7 @@ export default function ZegoInterviewRoom() {
 
         {/* ---- RIGHT SIDEBAR (30%) ---- */}
         {!sidebarCollapsed && (
-          <div className="w-[340px] shrink-0 flex flex-col gap-4">
+          <div className="w-full lg:w-[340px] shrink-0 flex flex-col gap-4 overflow-y-auto lg:overflow-visible">
 
             {/* Sidebar Tabs Card */}
             <div className="bg-white rounded-2xl border flex flex-col flex-1 overflow-hidden" style={{ borderColor: 'var(--ir-border)', boxShadow: 'var(--ir-shadow-sm)' }}>

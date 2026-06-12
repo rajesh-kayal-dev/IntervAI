@@ -3,6 +3,8 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Confetti from 'react-confetti';
 import { motion } from 'framer-motion';
+import { Gamepad2, CheckCircle2, XCircle, Share2, Flame, Trophy } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function QuizResult() {
   const { quizId } = useParams();
@@ -20,6 +22,24 @@ export default function QuizResult() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/quiz/share/${quizId}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'My IntervAI Quiz Result',
+          text: `I just scored ${accuracy}% on my ${quiz.config.topic} quiz on IntervAI! Can you beat my score?`,
+          url: shareUrl,
+        });
+      } catch (error) {
+        console.log('Error sharing', error);
+      }
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast.success('Public link copied to clipboard!');
+    }
+  };
 
   useEffect(() => {
     fetchQuiz();
@@ -103,10 +123,12 @@ export default function QuizResult() {
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="md:col-span-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 flex flex-col justify-center space-y-6"
+            className="md:col-span-2 bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl rounded-3xl p-8 flex flex-col justify-center space-y-6 relative overflow-hidden"
           >
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl"></div>
+            
             <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-              <span>🎮</span> XP & Rewards
+              <Gamepad2 className="w-6 h-6 text-emerald-400" /> XP & Rewards
             </h3>
             
             <div className="grid grid-cols-2 gap-4">
@@ -125,9 +147,9 @@ export default function QuizResult() {
               <motion.div 
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-3 text-center text-white font-semibold shadow-lg shadow-emerald-500/20"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-3 flex items-center justify-center gap-2 text-white font-semibold shadow-lg shadow-emerald-500/20"
               >
-                🎉 Level Up! You are now Level {gamification.newLevel}
+                <Trophy className="w-5 h-5 text-yellow-300" /> Level Up! You are now Level {gamification.newLevel}
               </motion.div>
             )}
           </motion.div>
@@ -140,13 +162,15 @@ export default function QuizResult() {
           transition={{ delay: 0.3 }}
           className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8"
         >
-          <h3 className="text-2xl font-bold text-white mb-6">Detailed Review</h3>
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+            Detailed Review
+          </h3>
           <div className="space-y-6">
             {quiz.questions.map((q, idx) => (
               <div key={idx} className={`p-6 rounded-2xl border ${q.isCorrect ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20'}`}>
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 mt-1">
-                    {q.isCorrect ? <span className="text-emerald-500 text-xl">✅</span> : <span className="text-red-500 text-xl">❌</span>}
+                    {q.isCorrect ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <XCircle className="w-6 h-6 text-red-500" />}
                   </div>
                   <div className="flex-1 space-y-3">
                     <p className="text-lg text-white font-medium">{q.question}</p>
@@ -188,8 +212,11 @@ export default function QuizResult() {
           <button onClick={() => navigate('/quiz/setup')} className="px-8 py-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-emerald-500/20">
             Start New Quiz
           </button>
-          <button onClick={() => navigate('/')} className="px-8 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold border border-white/10 transition-colors">
-            Back to Dashboard
+          <button onClick={handleShare} className="px-8 py-4 bg-[#1e293b] hover:bg-[#334155] border border-white/10 text-white rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg">
+            <Share2 className="w-5 h-5 text-emerald-400" /> Share Result
+          </button>
+          <button onClick={() => navigate('/')} className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl font-semibold border border-white/10 transition-colors">
+            Dashboard
           </button>
         </motion.div>
 

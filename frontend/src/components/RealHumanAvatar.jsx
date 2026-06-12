@@ -153,7 +153,7 @@ export default function RealHumanAvatar({ profile, isSpeaking, expression = 'neu
           onLoad={() => setImgLoaded(true)}
           onError={() => setImgError(true)}
           style={{
-            objectPosition: '50% 30%',
+            objectPosition: 'center',
             filter: isSpeaking ? 'brightness(1.08) contrast(1.03) saturate(1.05)' : 'brightness(1) contrast(1) saturate(1)',
             transition: 'filter 0.4s ease, opacity 0.7s ease',
           }}
@@ -176,6 +176,14 @@ export default function RealHumanAvatar({ profile, isSpeaking, expression = 'neu
         <div className="absolute inset-0 pointer-events-none z-20" style={{
           background: 'radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(0,0,0,0.25) 100%)'
         }} />
+
+        <canvas
+          ref={canvasRef}
+          width={width}
+          height={height}
+          className="absolute inset-0 w-full h-full pointer-events-none z-15"
+          style={{ mixBlendMode: 'normal' }}
+        />
       </div>
 
       {!videoSrc && isSpeaking && (
@@ -202,14 +210,6 @@ export default function RealHumanAvatar({ profile, isSpeaking, expression = 'neu
           }}
         />
       )}
-
-      <canvas
-        ref={canvasRef}
-        width={width}
-        height={height}
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{ mixBlendMode: 'normal' }}
-      />
 
       <style>{'@keyframes speaking-glow { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }'}</style>
     </div>
