@@ -1,0 +1,55 @@
+- generic [ref=e3]:
+  - main [ref=e17]:
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - heading "Premium AI Interview Simulation" [level=1] [ref=e147]
+        - paragraph [ref=e148]: Experience a hyper-realistic video interview with a professional AI interviewer. Customize everything and feel like it's a real Zoom call.
+      - generic [ref=e149]:
+        - generic [ref=e151]:
+          - img [ref=e153]
+          - generic [ref=e156]: Basic Info
+        - generic [ref=e157]:
+          - img [ref=e159]
+          - generic [ref=e162]: Interview Config
+        - generic [ref=e163]:
+          - img [ref=e165]
+          - generic [ref=e168]: Company Context
+        - generic [ref=e169]:
+          - img [ref=e171]
+          - generic [ref=e173]: Choose Interviewer
+        - generic [ref=e174]:
+          - img [ref=e176]
+          - generic [ref=e179]: Resume & Ready
+      - generic [ref=e183]:
+        - generic [ref=e271]:
+          - heading "Resume & Final Preparation" [level=2] [ref=e272]
+          - generic [ref=e273]:
+            - generic [ref=e274]: Upload Resume (PDF - Optional)
+            - generic [ref=e276] [cursor=pointer]:
+              - img [ref=e277]
+              - generic [ref=e280]: Click to upload your resume
+              - generic [ref=e281]: PDF format only
+          - generic [ref=e282]:
+            - heading "Interview Summary" [level=3] [ref=e283]:
+              - img [ref=e284]
+              - text: Interview Summary
+            - generic [ref=e287]:
+              - generic [ref=e288]: "Role:"
+              - generic [ref=e289]: Full Stack Developer
+              - generic [ref=e290]: "Type:"
+              - generic [ref=e291]: Technical
+              - generic [ref=e292]: "Duration:"
+              - generic [ref=e293]: 15 minutes
+              - generic [ref=e294]: "Interviewer:"
+              - generic [ref=e295]: Sarah Chen (Senior Engineering Manager)
+          - paragraph [ref=e296]:
+            - img [ref=e297]
+            - text: You'll be able to check your camera, microphone, and internet before joining.
+        - generic [ref=e199]:
+          - button "Back" [ref=e200] [cursor=pointer]:
+            - img [ref=e201]
+            - text: Back
+          - button "Check Devices & Join" [active] [ref=e300] [cursor=pointer]:
+            - text: Check Devices & Join
+            - img [ref=e204]
+  - region "Notifications Alt+T"

@@ -195,6 +195,26 @@ export const getSimulationResult = async (req, res) => {
 
 import { generateToken04 } from '../utils/zegoToken.js';
 
+// @desc    Update live notes during interview
+// @route   POST /api/simulation-update-notes
+// @access  Private
+export const updateLiveNotes = async (req, res) => {
+    try {
+        const { config, history } = req.body;
+        if (!config || !history) {
+            return res.status(400).json({ message: "Missing config or history" });
+        }
+        const aiResponse = await axios.post(`${process.env.AI_SERVICE_URL || 'http://127.0.0.1:8000'}/simulation-update-notes`, {
+            config,
+            history
+        });
+        res.status(200).json(aiResponse.data);
+    } catch (error) {
+        console.error("Live Notes Error:", error.message);
+        res.status(200).json({ notes: [], summary: "Analyzing the candidate's responses..." });
+    }
+};
+
 // @desc    Get ZegoCloud credentials
 // @route   GET /api/simulation/zego/credentials
 // @access  Private

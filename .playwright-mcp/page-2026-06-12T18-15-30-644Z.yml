@@ -1,0 +1,14 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e26]:
+      - heading "Topic Selection" [level=2] [ref=e27]
+      - generic [ref=e28]:
+        - button "React" [active] [ref=e29] [cursor=pointer]
+        - button "Node.js" [ref=e30] [cursor=pointer]
+        - button "Express" [ref=e31] [cursor=pointer]
+        - button "MongoDB" [ref=e32] [cursor=pointer]
+        - button "JavaScript" [ref=e33] [cursor=pointer]
+        - button "SQL" [ref=e34] [cursor=pointer]
+        - button "System Design" [ref=e35] [cursor=pointer]
+      - button "← Go Back" [ref=e36] [cursor=pointer]
+  - region "Notifications Alt+T"

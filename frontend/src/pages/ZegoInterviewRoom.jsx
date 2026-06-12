@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ZegoExpressEngine } from 'zego-express-engine-webrtc';
-import AiInterviewerAvatar from '../components/AiInterviewerAvatar';
+import RealHumanAvatar from '../components/RealHumanAvatar';
 import { getInterviewer } from '../data/interviewerProfiles';
 import { getStream, clearStream } from '../utils/streamStore';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff, Settings, Maximize2,
-  Monitor, ChevronUp, Loader2, Wifi, WifiOff, Clock, User, Volume2, Circle
+  MessageSquare, Loader2, Clock, User, Volume2,
+  CheckCircle2, Circle, FileText, Sparkles, ArrowLeft,
+  ChevronRight, BarChart3, Calendar, Users
 } from 'lucide-react';
 
 const STATUS = {
@@ -41,6 +43,13 @@ export default function ZegoInterviewRoom() {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [audioLevel, setAudioLevel] = useState(0);
   const [transcriptHistory, setTranscriptHistory] = useState([]);
+  const [avatarVideoSrc, setAvatarVideoSrc] = useState(null);
+  const [liveNotes, setLiveNotes] = useState([]);
+  const [liveSummary, setLiveSummary] = useState("Analyzing the candidate's responses...");
+
+  // Sidebar state
+  const [sidebarTab, setSidebarTab] = useState('questions');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Refs
   const videoRef = useRef(null);
@@ -61,6 +70,7 @@ export default function ZegoInterviewRoom() {
 
   // ZegoCloud Refs
   const zgRef = useRef(null);
+  const zgInitGuardRef = useRef(false);
   const publishStreamIdRef = useRef(`candidate_${Date.now()}`);
 
   const [interviewer, setInterviewer] = useState(null);
@@ -93,10 +103,7 @@ export default function ZegoInterviewRoom() {
       if (audioPlayerRef.current) {
         audioPlayerRef.current.pause();
       }
-      if (zgRef.current) {
-        try { zgRef.current.logoutRoom(sessionId); } catch { }
-        try { zgRef.current.destroyEngine(); } catch { }
-      }
+      destroyZegoEngine();
       if (durationTimerRef.current) clearInterval(durationTimerRef.current);
       localStorage.removeItem('interviewer');
       clearStream();
@@ -179,6 +186,34 @@ export default function ZegoInterviewRoom() {
     }
   };
 
+  const refreshSession = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/simulation/${sessionId}`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      setSession(data);
+      return data;
+    } catch (err) {
+      console.error('Failed to refresh session', err);
+      return session;
+    }
+  };
+
+  const fetchLiveNotes = async (currentSession) => {
+    if (!currentSession || !currentSession.config) return;
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/simulation/update-notes`,
+        { config: currentSession.config, history: currentSession.transcript }
+      );
+      setLiveNotes(data.notes || []);
+      setLiveSummary(data.summary || "Analyzing...");
+    } catch (err) {
+      console.error("Failed to fetch live notes", err);
+    }
+  };
+
   const setupWebcam = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -197,14 +232,27 @@ export default function ZegoInterviewRoom() {
     }
   };
 
+  const destroyZegoEngine = () => {
+    if (zgRef.current) {
+      try { zgRef.current.logoutRoom(sessionId); } catch {}
+      try { zgRef.current.destroyEngine(); } catch {}
+      zgRef.current = null;
+    }
+    zgInitGuardRef.current = false;
+  };
+
   const initZegoCloud = async (user, existingStream) => {
+    if (zgInitGuardRef.current) return;
+    zgInitGuardRef.current = true;
+    if (zgRef.current) destroyZegoEngine();
     try {
       const { data: creds } = await axios.get(
         `${import.meta.env.VITE_API_URL}/simulation/zego/credentials`,
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
-      const zg = new ZegoExpressEngine(creds.appId, 1);
+      const serverUrl = `wss://wsliveroom-${creds.appId}.zegocloud.com/ws`;
+      const zg = new ZegoExpressEngine(creds.appId, serverUrl);
       zgRef.current = zg;
 
       zg.on('roomStateUpdate', (roomID, state, errorCode) => {
@@ -227,6 +275,7 @@ export default function ZegoInterviewRoom() {
         const localStream = await zg.createStream({
           camera: { video: true, audio: true }
         });
+        streamRef.current = localStream;
         if (videoRef.current) videoRef.current.srcObject = localStream;
         zg.publishStream(publishStreamIdRef.current, localStream);
       }
@@ -293,6 +342,7 @@ export default function ZegoInterviewRoom() {
     };
 
     mediaRecorder.onstop = () => {
+      mediaRecorderRef.current = null;
       statusRef.current = STATUS.PROCESSING;
       setStatus(STATUS.PROCESSING);
       processAudio();
@@ -414,7 +464,9 @@ export default function ZegoInterviewRoom() {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
-      playAIAudio(data.audioBase64, data.reply);
+      playAIAudio(data.audioBase64, data.reply, data.videoBase64);
+      const updatedSession = await refreshSession();
+      fetchLiveNotes(updatedSession);
     } catch (err) {
       toast.error('Failed to start interview');
       statusRef.current = STATUS.LISTENING;
@@ -436,7 +488,9 @@ export default function ZegoInterviewRoom() {
         { headers: { Authorization: `Bearer ${user.token}` } }
       );
 
-      playAIAudio(data.audioBase64, data.reply);
+      playAIAudio(data.audioBase64, data.reply, data.videoBase64);
+      const updatedSession = await refreshSession();
+      fetchLiveNotes(updatedSession);
     } catch (err) {
       toast.error('Failed to get AI response');
       statusRef.current = STATUS.LISTENING;
@@ -479,9 +533,15 @@ export default function ZegoInterviewRoom() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const playAIAudio = (base64Audio, replyText) => {
+  const playAIAudio = (base64Audio, replyText, base64Video = null) => {
     if (audioPlayerRef.current) {
       audioPlayerRef.current.pause();
+    }
+
+    if (base64Video) {
+      setAvatarVideoSrc(`data:video/mp4;base64,${base64Video}`);
+    } else {
+      setAvatarVideoSrc(null);
     }
 
     if (replyText) {
@@ -492,6 +552,7 @@ export default function ZegoInterviewRoom() {
       statusRef.current = STATUS.LISTENING;
       setStatus(STATUS.LISTENING);
       setTranscript('');
+      setAvatarVideoSrc(null);
       if (!isMutedRef.current) {
         setTimeout(() => startMediaRecorder(), 500);
       }
@@ -598,7 +659,7 @@ export default function ZegoInterviewRoom() {
       const newMuted = !isMuted;
       isMutedRef.current = newMuted;
       setIsMuted(newMuted);
-      if ((status === STATUS.LISTENING || status === STATUS.RECORDING) && !isMuted) {
+      if (!newMuted && (status === STATUS.LISTENING || status === STATUS.RECORDING)) {
         stopMediaRecorder();
       }
     }
@@ -617,257 +678,451 @@ export default function ZegoInterviewRoom() {
   const isActiveListen = status === STATUS.LISTENING || status === STATUS.RECORDING;
   const isAIBusy = status === STATUS.AI_SPEAKING || status === STATUS.THINKING || status === STATUS.PROCESSING;
 
+  // Derive questions from session transcript (AI messages containing '?')
+  const questions = useMemo(() => {
+    if (!session?.transcript) return [];
+    const qs = [];
+    for (let i = 0; i < session.transcript.length; i++) {
+      const entry = session.transcript[i];
+      const entryMsg = entry.content || entry.message || '';
+      if (entry.role === 'ai' && entryMsg && entryMsg.includes('?')) {
+        const sentences = entryMsg.split(/[.!?]+/).filter(s => s.trim().length > 10);
+        const questionText = sentences.length > 0 ? sentences[sentences.length - 1].trim() + '?' : entryMsg.substring(0, 120);
+        const hasResponse = i + 1 < session.transcript.length && session.transcript[i + 1]?.role === 'user';
+        const nextMsg = session.transcript[i + 1]?.content || session.transcript[i + 1]?.message || '';
+        qs.push({
+          id: i,
+          text: questionText.length > 120 ? questionText.substring(0, 117) + '...' : questionText,
+          fullText: entryMsg,
+          completed: hasResponse,
+          response: hasResponse ? nextMsg : null
+        });
+      }
+    }
+    return qs;
+  }, [session?.transcript]);
+
+  // Derive timeline events
+  const timeline = useMemo(() => {
+    if (!session?.transcript) return [];
+    const events = [{ type: 'start', label: 'Interview Started', time: 0 }];
+    let questionCount = 0;
+    session.transcript.forEach((entry, idx) => {
+      const entryMsg = entry.content || entry.message || '';
+      if (entry.role === 'ai' && entryMsg.includes('?')) {
+        questionCount++;
+        events.push({ type: 'question', label: `Question ${questionCount} asked`, time: idx });
+      } else if (entry.role === 'user') {
+        events.push({ type: 'response', label: 'Candidate responded', time: idx });
+      }
+    });
+    return events;
+  }, [session?.transcript]);
+
+  const interviewTitle = useMemo(() => {
+    const role = session?.config?.targetRole || 'Software Engineer';
+    const type = session?.config?.interviewType || 'Technical';
+    return `${role} — ${type} Interview`;
+  }, [session]);
+
+  const statusConfig = {
+    [STATUS.IDLE]: { color: 'bg-gray-400', label: 'Ready', textColor: 'text-gray-500' },
+    [STATUS.AI_SPEAKING]: { color: 'bg-blue-500', label: 'Speaking', textColor: 'text-blue-600' },
+    [STATUS.LISTENING]: { color: 'bg-emerald-500', label: 'Listening', textColor: 'text-emerald-600' },
+    [STATUS.RECORDING]: { color: 'bg-emerald-500', label: 'Recording', textColor: 'text-emerald-600' },
+    [STATUS.PROCESSING]: { color: 'bg-amber-500', label: 'Processing', textColor: 'text-amber-600' },
+    [STATUS.THINKING]: { color: 'bg-indigo-500', label: 'Thinking', textColor: 'text-indigo-600' }
+  };
+  const currentStatus = statusConfig[status] || statusConfig[STATUS.IDLE];
+
+  // ---------- LOADING STATE ----------
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col items-center justify-center text-white">
+      <div className="interview-room fixed inset-0 z-50 flex flex-col items-center justify-center" style={{ background: 'var(--ir-bg)' }}>
         <div className="relative mb-8">
-          <div className="w-20 h-20 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-          <div className="absolute inset-0 w-20 h-20 border-4 border-indigo-500/10 border-b-indigo-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+          <div className="w-20 h-20 border-4 rounded-full animate-spin" style={{ borderColor: '#EEF2FF', borderTopColor: '#4F46E5' }} />
+          <div className="absolute inset-0 w-20 h-20 border-4 rounded-full animate-spin" style={{ borderColor: '#EEF2FF10', borderBottomColor: '#4F46E580', animationDirection: 'reverse', animationDuration: '1.5s' }} />
         </div>
-        <h2 className="text-2xl font-bold mb-2">Preparing Interview Room</h2>
-        <p className="text-zinc-400 text-sm mb-6">Setting up AI interviewer, audio, and video...</p>
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
-          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
-          Initializing AI Interviewer
+        <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--ir-text)' }}>Preparing Interview Room</h2>
+        <p className="text-sm mb-6" style={{ color: 'var(--ir-text-secondary)' }}>Setting up AI interviewer, audio, and video...</p>
+        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--ir-text-secondary)' }}>
+          <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: 'var(--ir-primary)' }} />
+          Initializing AI models
         </div>
-        {zegoError && (
-          <div className="mt-4 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
-            ZegoCloud: {zegoError} (running in local mode)
-          </div>
-        )}
       </div>
     );
   }
 
-  const connectionStatus = () => {
-    if (session?.config?.interviewType === 'Technical') return 'Technical Interview';
-    if (session?.config?.interviewType === 'HR') return 'HR Interview';
-    if (session?.config?.interviewType === 'System Design') return 'System Design Interview';
-    return `${session?.config?.targetRole || 'Interview'} Session`;
-  };
-
-  const statusColors = {
-    [STATUS.IDLE]: 'bg-zinc-500',
-    [STATUS.AI_SPEAKING]: 'bg-blue-500',
-    [STATUS.LISTENING]: 'bg-green-500',
-    [STATUS.RECORDING]: 'bg-green-500',
-    [STATUS.PROCESSING]: 'bg-yellow-500',
-    [STATUS.THINKING]: 'bg-indigo-500'
-  };
-
+  // ---------- MAIN RENDER ----------
   return (
-    <div ref={containerRef} className="fixed inset-0 z-50 bg-black flex flex-col font-sans">
-      {/* Top Bar - Zoom Style */}
-      <div className="h-12 bg-zinc-900 flex items-center justify-between px-4 shrink-0 border-b border-zinc-800/50">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-white truncate max-w-[200px]">
-            {connectionStatus()}
-          </span>
-          <div className="flex items-center gap-1.5 px-2 py-0.5 bg-red-500/10 rounded text-xs">
-            <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-red-400 font-medium">REC</span>
-          </div>
-        </div>
+    <div ref={containerRef} className="interview-room fixed inset-0 z-50 flex flex-col font-sans" style={{ background: 'var(--ir-bg)' }}>
 
+      {/* ========== TOP NAVIGATION BAR ========== */}
+      <div className="glass-card h-14 flex items-center justify-between px-5 shrink-0 z-20" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
+        {/* Left: Logo + Title */}
         <div className="flex items-center gap-4">
-          {/* Audio Level Meter */}
-          {(status === STATUS.RECORDING || status === STATUS.LISTENING) && audioLevel > 0 && (
-            <div className="flex items-center gap-1">
-              <Volume2 className="w-3.5 h-3.5 text-green-400" />
-              <div className="w-16 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-green-500 rounded-full transition-all duration-100"
-                  style={{ width: `${Math.min(100, audioLevel * 2)}%` }}
-                />
-              </div>
+          <button onClick={() => navigate('/dashboard')} className="flex items-center gap-1.5 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Back to dashboard">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="w-px h-6 bg-gray-200" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'var(--ir-primary)' }}>
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-          )}
-
-          {/* Connection Status */}
-          <div className="flex items-center gap-1.5">
-            {zegoConnected ? (
-              <Wifi className="w-3.5 h-3.5 text-green-400" />
-            ) : (
-              <WifiOff className="w-3.5 h-3.5 text-yellow-400" />
-            )}
-            <span className={`text-xs ${zegoConnected ? 'text-green-400' : 'text-yellow-400'}`}>
-              {zegoConnected ? 'Connected' : 'Local Mode'}
-            </span>
+            <div>
+              <h1 className="text-sm font-bold" style={{ color: 'var(--ir-text)' }}>{interviewTitle}</h1>
+              <p className="text-[11px]" style={{ color: 'var(--ir-text-secondary)' }}>AI-Powered Mock Interview</p>
+            </div>
           </div>
+        </div>
 
-          {/* Duration */}
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <Clock className="w-3.5 h-3.5" />
-            <span className="text-xs font-mono">{formatDuration(duration)}</span>
+        {/* Center: Status */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ background: 'var(--ir-border-light)' }}>
+            <span className={`ir-status-dot ${currentStatus.color}`} />
+            <span className={`text-xs font-semibold ${currentStatus.textColor}`}>{currentStatus.label}</span>
+          </div>
+        </div>
+
+        {/* Right: Recording + Timer */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border" style={{ borderColor: 'var(--ir-border)', background: 'white' }}>
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            <span className="text-xs font-medium" style={{ color: 'var(--ir-danger)' }}>Live Recording</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ background: 'var(--ir-border-light)' }}>
+            <Clock className="w-3.5 h-3.5" style={{ color: 'var(--ir-text-secondary)' }} />
+            <span className="text-xs font-mono font-semibold" style={{ color: 'var(--ir-text)' }}>{formatDuration(duration)}</span>
           </div>
         </div>
       </div>
 
-      {/* Top Status Bar */}
-      <div className="h-8 bg-zinc-900/80 flex items-center justify-center gap-2 border-b border-zinc-800/30">
-        <span className={`w-2 h-2 rounded-full ${statusColors[status] || 'bg-zinc-500'} ${status === STATUS.AI_SPEAKING || status === STATUS.RECORDING || status === STATUS.PROCESSING || status === STATUS.THINKING ? 'animate-pulse' : ''}`} />
-        <span className="text-xs text-zinc-300 font-medium">
-          {getStatusLabel(status)}
-        </span>
-      </div>
+      {/* ========== MAIN CONTENT AREA ========== */}
+      <div className="flex-1 flex overflow-hidden p-4 gap-4">
 
-      {/* Video Area */}
-      <div className="flex-1 flex relative overflow-hidden">
-        {/* Main - AI Interviewer (left/large) */}
-        <div className="flex-1 relative bg-zinc-900">
-          {interviewer ? (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-zinc-900 to-zinc-950">
-              <AiInterviewerAvatar
-                profile={interviewer}
-                isSpeaking={status === STATUS.AI_SPEAKING}
-                expression={avatarExpression}
-                stateRef={avatarStateRef}
-                width={640}
-                height={480}
-              />
-            </div>
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                <div className={`w-32 h-32 rounded-full border-4 flex items-center justify-center mx-auto mb-4 ${status === STATUS.AI_SPEAKING ? 'border-indigo-400 bg-indigo-900/40' : 'border-zinc-700 bg-zinc-800'}`}>
-                  <User className="w-16 h-16 text-zinc-500" />
-                </div>
-                <p className="text-zinc-400 text-lg font-medium">
-                  {getStatusLabel(status) || 'Waiting...'}
-                </p>
+        {/* ---- LEFT COLUMN: Video + Meeting Notes (70%) ---- */}
+        <div className="flex-1 flex flex-col gap-4 min-w-0">
+
+          {/* Video Container */}
+          <div className="ir-video-container flex-1 relative">
+            {/* AI Interviewer */}
+            {interviewer ? (
+              <div className="w-full h-full">
+                <RealHumanAvatar
+                  profile={interviewer}
+                  isSpeaking={status === STATUS.AI_SPEAKING}
+                  expression={avatarExpression}
+                  stateRef={avatarStateRef}
+                  width={960}
+                  height={640}
+                  videoSrc={avatarVideoSrc}
+                />
+                <div className="ir-avatar-vignette" />
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800">
+                <div className="text-center">
+                  <div className={`w-28 h-28 rounded-full border-4 flex items-center justify-center mx-auto mb-4 ${status === STATUS.AI_SPEAKING ? 'border-indigo-400 bg-indigo-900/40' : 'border-gray-700 bg-gray-800'}`}>
+                    <User className="w-14 h-14 text-gray-500" />
+                  </div>
+                  <p className="text-gray-400 text-lg font-medium">{getStatusLabel(status) || 'Waiting...'}</p>
+                </div>
+              </div>
+            )}
 
-          {/* Interviewer name badge */}
-          <div className="absolute bottom-4 left-4 flex items-center gap-2">
-            <div className="px-3 py-1.5 bg-black/60 backdrop-blur rounded-lg border border-white/10">
-              <p className="text-sm text-white font-medium">
-                {interviewer?.fullName || 'AI Interviewer'}
-              </p>
-              <p className="text-xs text-zinc-400">{interviewer?.title || ''}</p>
-            </div>
-
-            {/* Audio level indicator when recording */}
-            {(status === STATUS.RECORDING) && (
-              <div className="flex items-center gap-1.5 px-2 py-1 bg-green-500/20 rounded-lg border border-green-500/30">
-                <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map(i => (
-                    <div
-                      key={i}
-                      className="w-0.5 bg-green-400 rounded-full transition-all duration-100"
-                      style={{
-                        height: `${Math.max(4, (audioLevel / 20) * (i / 5) * 16)}px`,
-                        opacity: audioLevel > i * 15 ? 1 : 0.3
-                      }}
-                    />
+            {/* Interviewer Name Badge (bottom-left overlay) */}
+            <div className="absolute bottom-4 left-4 flex items-center gap-2 z-10">
+              <div className="glass-card-dark px-3 py-2 rounded-xl">
+                <div className="flex items-center gap-2.5">
+                  {interviewer?.photoUrl && (
+                    <img src={interviewer.photoUrl} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-white/20" />
+                  )}
+                  <div>
+                    <p className="text-sm text-white font-semibold leading-tight">{interviewer?.fullName || 'AI Interviewer'}</p>
+                    <p className="text-[11px] text-white/60">{interviewer?.title || ''}</p>
+                  </div>
+                </div>
+              </div>
+              {/* Speaking wave indicator */}
+              {status === STATUS.AI_SPEAKING && (
+                <div className="glass-card-dark px-2.5 py-2 rounded-xl flex items-center gap-1">
+                  {[0, 1, 2, 3].map(i => (
+                    <div key={i} className="ir-wave-bar bg-blue-400" style={{ animationDelay: `${i * 0.15}s` }} />
                   ))}
                 </div>
-                <span className="text-xs text-green-400 font-medium">REC</span>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </div>
 
-        {/* PIP - Candidate (right/small) */}
-        <div className="absolute bottom-4 right-4 w-64 aspect-video bg-zinc-800 rounded-xl overflow-hidden border-2 border-zinc-700 shadow-2xl">
-          {isCameraOn && streamRef.current ? (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover transform scale-x-[-1]"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-zinc-800">
-              <div className="w-12 h-12 bg-zinc-700 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-zinc-500" />
+            {/* User PIP (top-right overlay) */}
+            <div className="absolute top-4 right-4 w-48 aspect-video ir-pip z-10">
+              {isCameraOn && streamRef.current ? (
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover transform scale-x-[-1]" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                  <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-gray-500" />
+                  </div>
+                </div>
+              )}
+              <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
+                <span className="text-[11px] text-white bg-black/50 px-2 py-0.5 rounded font-medium">
+                  You
+                </span>
+                {status === STATUS.RECORDING && <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
+                {isMuted && (
+                  <span className="bg-red-500/80 p-0.5 rounded">
+                    <MicOff className="w-2.5 h-2.5 text-white" />
+                  </span>
+                )}
               </div>
             </div>
-          )}
-          <div className="absolute bottom-1.5 left-2">
-            <span className="text-xs text-white bg-black/50 px-2 py-0.5 rounded font-medium">
-              You {(status === STATUS.RECORDING) && <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block ml-1 animate-pulse" />}
-            </span>
+
+            {/* Transcript overlay (center-bottom) */}
+            {transcript && (
+              <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 pointer-events-none z-10">
+                <div className="ir-transcript-overlay px-5 py-3">
+                  <p className="text-sm text-center leading-relaxed" style={{ color: 'var(--ir-text)' }}>
+                    {transcript}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom video controls (overlaid on video) */}
+            <div className="absolute bottom-0 left-0 right-0 z-10">
+              <div className="flex items-center justify-center gap-2 py-3 px-4" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.6))' }}>
+                <button
+                  onClick={toggleMute}
+                  className={`ir-control-btn ${isMuted ? 'active' : ''}`}
+                  style={!isMuted ? { background: 'rgba(255,255,255,0.15)', color: 'white' } : {}}
+                  aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
+                >
+                  {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </button>
+
+                <button
+                  onClick={toggleCamera}
+                  className={`ir-control-btn ${!isCameraOn ? 'active' : ''}`}
+                  style={isCameraOn ? { background: 'rgba(255,255,255,0.15)', color: 'white' } : {}}
+                  aria-label={!isCameraOn ? 'Turn on camera' : 'Turn off camera'}
+                >
+                  {!isCameraOn ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+                </button>
+
+                <button
+                  onClick={toggleListen}
+                  disabled={isAIBusy}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm transition-all"
+                  style={{
+                    background: isActiveListen ? '#22C55E' : 'rgba(255,255,255,0.15)',
+                    color: 'white',
+                    opacity: isAIBusy ? 0.5 : 1,
+                    cursor: isAIBusy ? 'not-allowed' : 'pointer',
+                    boxShadow: isActiveListen ? '0 0 20px rgba(34,197,94,0.3)' : 'none'
+                  }}
+                  aria-label={isActiveListen ? 'Stop listening' : 'Start listening'}
+                >
+                  {status === STATUS.RECORDING ? (
+                    <><span className="w-2 h-2 bg-white rounded-full animate-pulse" /> Recording</>
+                  ) : isActiveListen ? (
+                    <><span className="w-2 h-2 bg-white rounded-full animate-pulse" /> Listening</>
+                  ) : status === STATUS.AI_SPEAKING ? (
+                    <><Volume2 className="w-4 h-4" /> Speaking</>
+                  ) : status === STATUS.THINKING ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Thinking</>
+                  ) : status === STATUS.PROCESSING ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing</>
+                  ) : (
+                    <><Mic className="w-4 h-4" /> Tap to Speak</>
+                  )}
+                </button>
+
+                <button
+                  className="ir-control-btn" style={{ background: 'rgba(255,255,255,0.15)', color: 'white' }}
+                  aria-label="Settings"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+
+                <div className="w-px h-8 bg-white/20 mx-1" />
+
+                <button
+                  onClick={endInterview}
+                  className="ir-control-btn active"
+                  aria-label="End Interview"
+                >
+                  <PhoneOff className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Meeting Notes Section (below video) */}
+          <div className="ir-notes-section p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold" style={{ color: 'var(--ir-text)' }}>Key Meeting Notes — {interviewTitle}</h3>
+              <button className="p-1 rounded hover:bg-gray-100 transition-colors" aria-label="More options">
+                <Settings className="w-4 h-4" style={{ color: 'var(--ir-text-secondary)' }} />
+              </button>
+            </div>
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
+              <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--ir-text-secondary)' }}>
+                <Calendar className="w-3.5 h-3.5" />
+                <span>{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--ir-primary-light)', color: 'var(--ir-primary)' }}>
+                <BarChart3 className="w-3 h-3" />
+                <span className="font-medium">{session?.config?.interviewType || 'Technical'}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--ir-text-secondary)' }}>
+                <Users className="w-3.5 h-3.5" />
+                <span>{interviewer?.fullName || 'AI'}, Candidate</span>
+              </div>
+            </div>
+            <div className="p-3 rounded-xl" style={{ background: 'var(--ir-primary-light)' }}>
+              <div className="ir-ai-badge mb-2">
+                <Sparkles className="w-3 h-3" />
+                AI Summary of Meeting
+              </div>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--ir-text-secondary)' }}>
+                {liveSummary}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Transcript overlay */}
-        {transcript && (
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-full max-w-2xl px-6 pointer-events-none">
-            <div className="bg-black/80 backdrop-blur-md rounded-2xl px-6 py-4 border border-white/10 shadow-2xl">
-              <p className="text-white text-center text-base leading-relaxed">
-                {transcript}
-              </p>
+        {/* ---- RIGHT SIDEBAR (30%) ---- */}
+        {!sidebarCollapsed && (
+          <div className="w-[340px] shrink-0 flex flex-col gap-4">
+
+            {/* Sidebar Tabs Card */}
+            <div className="bg-white rounded-2xl border flex flex-col flex-1 overflow-hidden" style={{ borderColor: 'var(--ir-border)', boxShadow: 'var(--ir-shadow-sm)' }}>
+              {/* Tab Header */}
+              <div className="flex items-center border-b px-1" style={{ borderColor: 'var(--ir-border)' }}>
+                <button className={`ir-tab ${sidebarTab === 'questions' ? 'active' : ''}`} onClick={() => setSidebarTab('questions')}>Questions</button>
+                <button className={`ir-tab ${sidebarTab === 'timeline' ? 'active' : ''}`} onClick={() => setSidebarTab('timeline')}>Timeline</button>
+                <button className={`ir-tab ${sidebarTab === 'notes' ? 'active' : ''}`} onClick={() => setSidebarTab('notes')}>Notes</button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto ir-sidebar p-3">
+
+                {/* QUESTIONS TAB */}
+                {sidebarTab === 'questions' && (
+                  <div className="flex flex-col gap-2.5">
+                    {questions.length === 0 ? (
+                      <div className="text-center py-8">
+                        <MessageSquare className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--ir-border)' }} />
+                        <p className="text-xs" style={{ color: 'var(--ir-text-secondary)' }}>Questions will appear here as the interview progresses</p>
+                      </div>
+                    ) : (
+                      questions.map((q, idx) => {
+                        const isActive = idx === questions.length - 1 && !q.completed;
+                        return (
+                          <div key={q.id} className={`ir-question-card ${isActive ? 'active' : ''} ${q.completed ? 'completed' : ''}`}>
+                            <div className="flex items-start gap-3">
+                              <div className="shrink-0 mt-0.5">
+                                {q.completed ? (
+                                  <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--ir-success)' }} />
+                                ) : isActive ? (
+                                  <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'var(--ir-primary)', background: 'var(--ir-primary-light)' }}>
+                                    <span className="text-[9px] font-bold" style={{ color: 'var(--ir-primary)' }}>{String(idx + 1).padStart(2, '0')}</span>
+                                  </div>
+                                ) : (
+                                  <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center" style={{ borderColor: 'var(--ir-border)' }}>
+                                    <span className="text-[9px] font-bold" style={{ color: 'var(--ir-text-secondary)' }}>{String(idx + 1).padStart(2, '0')}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[13px] font-semibold leading-snug" style={{ color: 'var(--ir-text)' }}>{q.text}</p>
+                                {q.response && (
+                                  <p className="text-[11px] mt-1 line-clamp-2" style={{ color: 'var(--ir-text-secondary)' }}>
+                                    {q.response.substring(0, 100)}{q.response.length > 100 ? '...' : ''}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+
+                {/* TIMELINE TAB */}
+                {sidebarTab === 'timeline' && (
+                  <div className="flex flex-col gap-0">
+                    {timeline.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Clock className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--ir-border)' }} />
+                        <p className="text-xs" style={{ color: 'var(--ir-text-secondary)' }}>Timeline events will appear here</p>
+                      </div>
+                    ) : (
+                      timeline.map((event, idx) => (
+                        <div key={idx} className="flex items-start gap-3 py-2">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                              event.type === 'start' ? 'bg-indigo-500' :
+                              event.type === 'question' ? 'bg-blue-500' :
+                              'bg-emerald-500'
+                            }`} />
+                            {idx < timeline.length - 1 && <div className="w-px flex-1 min-h-[16px] bg-gray-200 mt-1" />}
+                          </div>
+                          <div className="pb-2">
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--ir-text)' }}>{event.label}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {/* NOTES TAB */}
+                {sidebarTab === 'notes' && (
+                  <div className="flex flex-col gap-2.5">
+                    {liveNotes.length === 0 ? (
+                      <div className="text-center py-8">
+                        <FileText className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--ir-border)' }} />
+                        <p className="text-xs" style={{ color: 'var(--ir-text-secondary)' }}>AI-generated notes will appear here in real-time</p>
+                      </div>
+                    ) : (
+                      liveNotes.map((note, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg" style={{ background: 'var(--ir-border-light)' }}>
+                          <p className="text-[12px] leading-relaxed" style={{ color: 'var(--ir-text)' }}>{note}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* AI Interviewer Profile Card */}
+            <div className="bg-white rounded-2xl border p-4" style={{ borderColor: 'var(--ir-border)', boxShadow: 'var(--ir-shadow-sm)' }}>
+              <div className="flex items-center gap-3">
+                {interviewer?.photoUrl ? (
+                  <img src={interviewer.photoUrl} alt={interviewer.fullName} className="w-12 h-12 rounded-xl object-cover" style={{ border: `2px solid ${interviewer.color || 'var(--ir-primary)'}` }} />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'var(--ir-primary-light)' }}>
+                    <User className="w-6 h-6" style={{ color: 'var(--ir-primary)' }} />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold truncate" style={{ color: 'var(--ir-text)' }}>{interviewer?.fullName || 'AI Interviewer'}</p>
+                  <p className="text-[11px] truncate" style={{ color: 'var(--ir-text-secondary)' }}>{interviewer?.title || 'Senior Engineer'}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--ir-border)' }} />
+              </div>
+              {interviewer && (
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--ir-primary-light)', color: 'var(--ir-primary)' }}>{interviewer.exCompany}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--ir-border-light)', color: 'var(--ir-text-secondary)' }}>{interviewer.experience}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
-      </div>
-
-      {/* Bottom Controls - Zoom Style */}
-      <div className="h-20 bg-zinc-900 flex items-center justify-center gap-3 px-4 shrink-0 border-t border-zinc-800/50">
-        <button
-          onClick={toggleMute}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isMuted ? 'bg-red-500 text-white' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
-          title={isMuted ? 'Unmute' : 'Mute'}
-          aria-label={isMuted ? 'Unmute microphone' : 'Mute microphone'}
-        >
-          {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-        </button>
-
-        <button
-          onClick={toggleCamera}
-          className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${!isCameraOn ? 'bg-red-500 text-white' : 'bg-zinc-800 text-white hover:bg-zinc-700'}`}
-          title={isCameraOn ? 'Stop Video' : 'Start Video'}
-          aria-label={!isCameraOn ? 'Turn on camera' : 'Turn off camera'}
-        >
-          {!isCameraOn ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
-        </button>
-
-        <div className="w-px h-8 bg-zinc-800" />
-
-        <button
-          onClick={toggleListen}
-          disabled={isAIBusy}
-          className={`px-8 h-12 rounded-full flex items-center justify-center gap-2 font-semibold transition-all ${isActiveListen ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/30' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'} ${isAIBusy ? 'opacity-50 cursor-not-allowed' : ''}`}
-          title={isActiveListen ? 'Stop listening' : 'Tap to Speak'}
-          aria-label={isActiveListen ? 'Stop listening' : 'Start listening'}
-        >
-          {status === STATUS.RECORDING ? (
-            <><span className="w-2 h-2 bg-white rounded-full animate-pulse" /> Recording</>
-          ) : isActiveListen ? (
-            <><span className="w-2 h-2 bg-white rounded-full animate-pulse" /> Listening</>
-          ) : status === STATUS.AI_SPEAKING ? (
-            <><span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" /> AI Speaking</>
-          ) : status === STATUS.THINKING ? (
-            <><span className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse" /> Thinking</>
-          ) : status === STATUS.PROCESSING ? (
-            <><Loader2 className="w-4 h-4 animate-spin" /> Processing</>
-          ) : (
-            <><Mic className="w-4 h-4" /> Tap to Speak</>
-          )}
-        </button>
-
-        <div className="w-px h-8 bg-zinc-800" />
-
-        <button
-          onClick={toggleFullScreen}
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-zinc-800 text-white hover:bg-zinc-700 transition-all"
-          title="Full Screen"
-          aria-label={isFullScreen ? "Exit Full Screen" : "Full Screen"}
-        >
-          <Maximize2 className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={endInterview}
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-red-600 hover:bg-red-500 text-white transition-all"
-          title="End Interview"
-          aria-label="End Interview"
-        >
-          <PhoneOff className="w-5 h-5" />
-        </button>
       </div>
     </div>
   );

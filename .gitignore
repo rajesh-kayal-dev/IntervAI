@@ -63,3 +63,9 @@ pnpm-lock.yaml
 # Misc
 .eslintcache
 *.tgz
+
+# Playwright MCP
+.playwright-mcp/
+
+# Temp audio
+backend/temp.mp3

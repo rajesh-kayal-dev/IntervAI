@@ -1,0 +1,11 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e18]:
+      - heading "Experience Level" [level=2] [ref=e19]
+      - generic [ref=e20]:
+        - button "Fresher" [active] [ref=e21] [cursor=pointer]
+        - button "1-2 Years" [ref=e22] [cursor=pointer]
+        - button "3-5 Years" [ref=e23] [cursor=pointer]
+        - button "Senior" [ref=e24] [cursor=pointer]
+      - button "← Go Back" [ref=e25] [cursor=pointer]
+  - region "Notifications Alt+T"

@@ -116,6 +116,14 @@ class SimulationReportResponse(BaseModel):
     report: dict
     model_used: str
 
+class SimulationNotesRequest(BaseModel):
+    config: dict
+    history: list[dict]
+
+class SimulationNotesResponse(BaseModel):
+    notes: list[str]
+    summary: str
+
 @app.get("/")
 async def root():
     return {"message":"Hello from AI Interviewer Microservice !","model":OLLAMA_MODEL_NAME}
@@ -382,16 +390,14 @@ async def simulation_chat(request: SimulationChatRequest):
                 f"\nCandidate Resume: {resume}"
                 f"\n\nTRANSCRIPT SO FAR:\n{transcript_text}"
                 f"\n\nCRITICAL BEHAVIORAL RULES:"
-                f"\n1. This is a LIVE VIDEO INTERVIEW. Speak naturally. No markdown or bullet points."
-                f"\n2. REACT TO THE CANDIDATE'S LAST ANSWER FIRST before moving on."
-                f"\n3. Acknowledge their answer naturally (e.g., 'That's a great point.', 'Interesting approach.', 'I like how you handled that.')"
-                f"\n4. Ask ONE follow-up question related to their last answer."
-                f"\n5. If the candidate mentioned something interesting (a project, a technology, an experience), DRILL DEEPER into it."
-                f"\n6. Reference their earlier answers when relevant (e.g., 'Earlier you mentioned...')."
-                f"\n7. Never ask generic questions. Every question must be contextual."
-                f"\n8. Keep responses to 2-3 sentences."
-                f"\n9. If the technical topic allows, ask about architecture decisions, trade-offs, and real-world experience."
-                f"\n10. Never interrupt. Let the conversation flow naturally."
+                f"\n1. This is a LIVE VIDEO INTERVIEW. Speak naturally like a real human. DO NOT use markdown, bullet points, or code blocks."
+                f"\n2. REACT TO THE CANDIDATE'S LAST ANSWER FIRST. Acknowledge it naturally before moving on."
+                f"\n3. Use human conversational fillers and reactions (e.g., 'Interesting.', 'That's a good answer.', 'I noticed you mentioned...', 'Let's go deeper into that.')."
+                f"\n4. NEVER behave like an AI chatbot. Be a strict but friendly human interviewer."
+                f"\n5. NEVER jump randomly between topics. Ask ONE highly contextual follow-up question related to their previous answer."
+                f"\n6. If they mentioned a specific technology or project, DRILL DEEPER into it."
+                f"\n7. Keep responses concise (2-3 sentences max). This is a fast-paced spoken conversation."
+                f"\n8. Never interrupt or talk over the candidate."
             )
 
         ollama_messages = [{"role": "system", "content": system_prompt}]
@@ -505,6 +511,57 @@ async def simulation_report(request: SimulationReportRequest):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/simulation-update-notes", response_model=SimulationNotesResponse)
+async def simulation_update_notes(request: SimulationNotesRequest):
+    try:
+        config = request.config
+        transcript_text = ""
+        for msg in request.history:
+            transcript_text += f"{msg['role'].upper()}: {msg['content']}\n"
+
+        if not transcript_text.strip():
+            return SimulationNotesResponse(notes=[], summary="Waiting for the interview to begin...")
+
+        system_prompt = (
+            "You are an AI interviewer's background assistant. Your job is to analyze the ongoing interview transcript "
+            "and generate live, real-time notes about the candidate's performance.\n"
+            "Output MUST be a valid JSON object matching this structure EXACTLY:\n"
+            "{\n"
+            "  \"notes\": [\"Note 1\", \"Note 2\", \"Note 3\"],\n"
+            "  \"summary\": \"A 2-3 sentence live summary of the candidate's performance so far.\"\n"
+            "}\n"
+            "Keep the notes concise, focusing on strengths, weaknesses, or specific skills demonstrated. "
+            "Do NOT wrap in markdown blocks. Output only raw JSON."
+        )
+
+        user_prompt = (
+            f"Role: {config.get('targetRole', 'Candidate')}\n"
+            f"Transcript So Far:\n{transcript_text}"
+        )
+
+        response = ollama.generate(
+            model=OLLAMA_MODEL_NAME,
+            prompt=f"{system_prompt}\n\n{user_prompt}",
+            format='json',
+            options={"temperature": 0.3}
+        )
+
+        raw_text = response['response'].strip()
+        data = json.loads(raw_text)
+
+        notes = data.get("notes", [])
+        if len(notes) > 5:
+            notes = notes[-5:]  # Keep only the latest 5 notes
+
+        summary = data.get("summary", "Analyzing the candidate's responses...")
+
+        return SimulationNotesResponse(notes=notes, summary=summary)
+
+    except Exception as e:
+        print(f"Error generating notes: {str(e)}")
+        # Fallback response so frontend doesn't crash
+        return SimulationNotesResponse(notes=["Analyzing candidate responses..."], summary="Interview is in progress...")
 
 if __name__=="__main__":
     uvicorn.run(app,host="0.0.0.0",port=AI_SERVICE_PORT)

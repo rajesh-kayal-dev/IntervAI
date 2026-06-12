@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getInterviewer } from '../data/interviewerProfiles';
-import AiInterviewerAvatar from '../components/AiInterviewerAvatar';
+import RealHumanAvatar from '../components/RealHumanAvatar';
 import { setStream as storeSetStream } from '../utils/streamStore';
 import { toast } from 'react-toastify';
 import {
@@ -37,7 +37,7 @@ export default function InterviewLobby() {
       setSessionId(setupData.sessionId);
     }
     return () => {
-      if (stream) stream.getTracks().forEach(t => t.stop());
+      // Stream is passed to ZegoInterviewRoom via store — do NOT stop it here
     };
   }, []);
 
@@ -107,7 +107,7 @@ export default function InterviewLobby() {
 
   const joinInterview = () => {
     if (sessionId && stream) {
-      setStream(stream);
+      storeSetStream(stream);
       navigate(`/simulation/room/${sessionId}`, {
         state: { interviewer, setupData }
       });
@@ -230,7 +230,7 @@ export default function InterviewLobby() {
               {interviewer && (
                 <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
                   <div className="h-48 bg-zinc-800 relative overflow-hidden">
-                    <AiInterviewerAvatar
+                    <RealHumanAvatar
                       profile={interviewer}
                       isSpeaking={false}
                       expression="smiling"

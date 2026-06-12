@@ -1,0 +1,50 @@
+- generic [ref=e3]:
+  - main [ref=e17]:
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - heading "Premium AI Interview Simulation" [level=1] [ref=e147]
+        - paragraph [ref=e148]: Experience a hyper-realistic video interview with a professional AI interviewer. Customize everything and feel like it's a real Zoom call.
+      - generic [ref=e149]:
+        - generic [ref=e151]:
+          - img [ref=e153]
+          - generic [ref=e156]: Basic Info
+        - generic [ref=e157]:
+          - img [ref=e159]
+          - generic [ref=e162]: Interview Config
+        - generic [ref=e163]:
+          - img [ref=e165]
+          - generic [ref=e168]: Company Context
+        - generic [ref=e169]:
+          - img [ref=e171]
+          - generic [ref=e173]: Choose Interviewer
+        - generic [ref=e174]:
+          - img [ref=e176]
+          - generic [ref=e179]: Resume & Ready
+      - generic [ref=e183]:
+        - generic [ref=e184]:
+          - heading "Basic Information" [level=2] [ref=e185]
+          - generic [ref=e186]:
+            - generic [ref=e187]: Full Name
+            - textbox "Enter your full name" [ref=e188]
+          - generic [ref=e189]:
+            - generic [ref=e190]:
+              - generic [ref=e191]: Target Role
+              - textbox [ref=e192]: Full Stack Developer
+            - generic [ref=e193]:
+              - generic [ref=e194]: Experience Level
+              - combobox [ref=e195]:
+                - option "Junior"
+                - option "Mid-Level" [selected]
+                - option "Senior"
+                - option "Lead"
+          - generic [ref=e196]:
+            - generic [ref=e197]: Years of Experience
+            - spinbutton [ref=e198]: "3"
+        - generic [ref=e199]:
+          - button "Back" [disabled] [ref=e200]:
+            - img [ref=e201]
+            - text: Back
+          - button "Continue" [ref=e203] [cursor=pointer]:
+            - text: Continue
+            - img [ref=e204]
+  - region "Notifications Alt+T"

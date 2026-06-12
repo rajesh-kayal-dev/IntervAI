@@ -1,0 +1,136 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "IntervAI Logo IntervAI" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "IntervAI Logo" [ref=e8]
+        - generic [ref=e9]: IntervAI
+      - navigation [ref=e10]:
+        - link "Dashboard" [ref=e11] [cursor=pointer]:
+          - /url: /
+        - link "Profile" [ref=e12] [cursor=pointer]:
+          - /url: /profile
+        - generic [ref=e15]: Rajesh
+        - button "Logout" [ref=e16] [cursor=pointer]
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - paragraph [ref=e21]: Good evening 👋
+          - heading "Welcome back, Rajesh" [level=1] [ref=e22]
+          - paragraph [ref=e23]: Your AI-powered interview coach is ready. Start a new session or review your past performance.
+        - generic [ref=e24]: AI Evaluator Active
+      - generic [ref=e29] [cursor=pointer]:
+        - generic [ref=e30]:
+          - heading "Real-Time AI Interview Beta" [level=2] [ref=e31]:
+            - img [ref=e32]
+            - text: Real-Time AI Interview
+            - generic [ref=e35]: Beta
+          - paragraph [ref=e36]: Experience a hyper-realistic Zoom-style video interview. Speak naturally with an AI Recruiter, upload your resume for context, and get a premium evaluation.
+        - button "Start Video Interview" [ref=e37]:
+          - text: Start Video Interview
+          - img [ref=e38]
+      - generic [ref=e43] [cursor=pointer]:
+        - generic [ref=e44]:
+          - heading "Premium AI Quiz New" [level=2] [ref=e45]:
+            - img [ref=e46]
+            - text: Premium AI Quiz
+            - generic [ref=e51]: New
+          - paragraph [ref=e52]: Challenge yourself with dynamic, AI-generated questions. Earn XP, build your streak, and level up your skills in our gamified Quiz Mode.
+        - button "Start Quiz" [ref=e53]:
+          - text: Start Quiz
+          - img [ref=e54]
+      - generic [ref=e56]:
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e61]: Total Sessions
+            - img [ref=e63]
+          - paragraph [ref=e65]: "0"
+          - paragraph [ref=e66]: All sessions
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: Completed
+            - img [ref=e73]
+          - paragraph [ref=e75]: "0"
+          - paragraph [ref=e76]: Fully evaluated
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: Avg Score
+            - img [ref=e83]
+          - paragraph [ref=e85]: "--"
+          - paragraph [ref=e86]: No scores yet
+      - generic [ref=e88]:
+        - generic [ref=e90]:
+          - img [ref=e92]
+          - generic [ref=e94]:
+            - heading "Start New Session" [level=2] [ref=e95]
+            - paragraph [ref=e96]: AI-generated interview questions
+        - generic [ref=e97]:
+          - generic [ref=e98]:
+            - generic [ref=e99]:
+              - generic [ref=e100]:
+                - img [ref=e102]
+                - text: Role
+              - generic [ref=e104]:
+                - combobox [ref=e105] [cursor=pointer]:
+                  - option "MERN Stack Developer" [selected]
+                  - option "MEAN Stack Developer"
+                  - option "Full Stack Python"
+                  - option "Full Stack Java"
+                  - option "Frontend Developer"
+                  - option "Backend Developer"
+                  - option "Data Scientist"
+                  - option "Data Analyst"
+                  - option "Machine Learning Engineer"
+                  - option "DevOps Engineer"
+                  - option "Cloud Engineer (AWS/Azure/GCP)"
+                  - option "Cybersecurity Engineer"
+                  - option "Blockchain Developer"
+                  - option "Mobile Developer (iOS/Android)"
+                  - option "Game Developer"
+                  - option "UI/UX Designer"
+                  - option "QA Automation Engineer"
+                  - option "Product Manager"
+                - generic:
+                  - img
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - img [ref=e109]
+                - text: Experience Level
+              - generic [ref=e111]:
+                - combobox [ref=e112] [cursor=pointer]:
+                  - option "Junior" [selected]
+                  - option "Mid-Level"
+                  - option "Senior"
+                - generic:
+                  - img
+            - generic [ref=e113]:
+              - generic [ref=e114]:
+                - img [ref=e116]
+                - text: Questions
+              - generic [ref=e118]:
+                - combobox [ref=e119] [cursor=pointer]:
+                  - option "5 Questions" [selected]
+                  - option "10 Questions"
+                  - option "15 Questions"
+                - generic:
+                  - img
+            - generic [ref=e120]:
+              - generic [ref=e121]:
+                - img [ref=e123]
+                - text: Interview Type
+              - generic [ref=e125]:
+                - combobox [ref=e126] [cursor=pointer]:
+                  - option "Oral only"
+                  - option "Coding Mix" [selected]
+                - generic:
+                  - img
+          - button "Launch Interview Session" [ref=e127] [cursor=pointer]:
+            - img [ref=e128]
+            - text: Launch Interview Session
+      - generic [ref=e130]:
+        - heading "Interview History" [level=2] [ref=e132]:
+          - img [ref=e134]
+          - text: Interview History
+        - paragraph [ref=e140]: Loading sessions...
+  - region "Notifications Alt+T"

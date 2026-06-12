@@ -1,0 +1,32 @@
+- generic [ref=e3]:
+  - main:
+    - generic [ref=e388]:
+      - generic [ref=e389]:
+        - generic [ref=e390]:
+          - generic [ref=e391]: Technical Interview
+          - generic [ref=e394]: REC
+        - generic [ref=e395]:
+          - generic [ref=e396]:
+            - img [ref=e397]
+            - generic [ref=e404]: Local Mode
+          - generic [ref=e405]:
+            - img [ref=e406]
+            - generic [ref=e409]: 00:58
+      - generic [ref=e410]:
+        - generic [ref=e415]:
+          - paragraph [ref=e416]: Sarah Chen
+          - paragraph [ref=e417]: Senior Engineering Manager
+        - generic [ref=e420]: You
+      - generic [ref=e421]:
+        - button "Mute microphone" [ref=e422] [cursor=pointer]:
+          - img [ref=e423]
+        - button "Turn off camera" [ref=e426] [cursor=pointer]:
+          - img [ref=e427]
+        - button "Start listening" [ref=e431] [cursor=pointer]:
+          - img [ref=e459]
+          - text: Tap to Speak
+        - button "Full Screen" [ref=e436] [cursor=pointer]:
+          - img [ref=e437]
+        - button "End Interview" [ref=e442] [cursor=pointer]:
+          - img [ref=e443]
+  - region "Notifications Alt+T"

@@ -1,0 +1,63 @@
+- generic [ref=e3]:
+  - main [ref=e17]:
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - heading "Premium AI Interview Simulation" [level=1] [ref=e147]
+        - paragraph [ref=e148]: Experience a hyper-realistic video interview with a professional AI interviewer. Customize everything and feel like it's a real Zoom call.
+      - generic [ref=e149]:
+        - generic [ref=e151]:
+          - img [ref=e153]
+          - generic [ref=e156]: Basic Info
+        - generic [ref=e157]:
+          - img [ref=e159]
+          - generic [ref=e162]: Interview Config
+        - generic [ref=e163]:
+          - img [ref=e165]
+          - generic [ref=e168]: Company Context
+        - generic [ref=e169]:
+          - img [ref=e171]
+          - generic [ref=e173]: Choose Interviewer
+        - generic [ref=e174]:
+          - img [ref=e176]
+          - generic [ref=e179]: Resume & Ready
+      - generic [ref=e183]:
+        - generic [ref=e230]:
+          - heading "Choose Your Interviewer" [level=2] [ref=e231]
+          - paragraph [ref=e232]: Select the AI interviewer who will conduct your session. Each has a unique personality and style.
+          - generic [ref=e233]:
+            - button "Female" [ref=e234] [cursor=pointer]
+            - button "Male" [ref=e235] [cursor=pointer]
+          - generic [ref=e236]:
+            - button "S Sarah Chen Senior Engineering Manager 12 Years Experience Ex-Google Professional, warm, and detail-oriented. She gives clear feedback and makes candidates feel at ease while maintaining high standards." [ref=e237] [cursor=pointer]:
+              - img [ref=e239]
+              - generic [ref=e243]: S
+              - heading "Sarah Chen" [level=3] [ref=e244]
+              - paragraph [ref=e245]: Senior Engineering Manager
+              - generic [ref=e246]:
+                - generic [ref=e247]: 12 Years Experience
+                - generic [ref=e249]: Ex-Google
+              - paragraph [ref=e250]: Professional, warm, and detail-oriented. She gives clear feedback and makes candidates feel at ease while maintaining high standards.
+            - button "N Neha Sharma Engineering Director 14 Years Experience Ex-Microsoft Strategic thinker with a focus on system design and architecture. She challenges candidates with thoughtful, deep-dive questions." [ref=e251] [cursor=pointer]:
+              - generic [ref=e253]: "N"
+              - heading "Neha Sharma" [level=3] [ref=e254]
+              - paragraph [ref=e255]: Engineering Director
+              - generic [ref=e256]:
+                - generic [ref=e257]: 14 Years Experience
+                - generic [ref=e259]: Ex-Microsoft
+              - paragraph [ref=e260]: Strategic thinker with a focus on system design and architecture. She challenges candidates with thoughtful, deep-dive questions.
+            - button "P Priya Patel Technical Recruiter 8 Years Experience Ex-Amazon Friendly and approachable. She specializes in behavioral interviews and helps candidates showcase their best selves." [ref=e261] [cursor=pointer]:
+              - generic [ref=e263]: P
+              - heading "Priya Patel" [level=3] [ref=e264]
+              - paragraph [ref=e265]: Technical Recruiter
+              - generic [ref=e266]:
+                - generic [ref=e267]: 8 Years Experience
+                - generic [ref=e269]: Ex-Amazon
+              - paragraph [ref=e270]: Friendly and approachable. She specializes in behavioral interviews and helps candidates showcase their best selves.
+        - generic [ref=e199]:
+          - button "Back" [ref=e200] [cursor=pointer]:
+            - img [ref=e201]
+            - text: Back
+          - button "Continue" [active] [ref=e203] [cursor=pointer]:
+            - text: Continue
+            - img [ref=e204]
+  - region "Notifications Alt+T"

@@ -1,0 +1,155 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e6]:
+      - link "IntervAI Logo IntervAI" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "IntervAI Logo" [ref=e8]
+        - generic [ref=e9]: IntervAI
+      - navigation [ref=e10]:
+        - generic [ref=e11]:
+          - link "Sign In" [ref=e12] [cursor=pointer]:
+            - /url: /login
+          - link "Get Started" [ref=e13] [cursor=pointer]:
+            - /url: /register
+  - main [ref=e14]:
+    - generic [ref=e15]:
+      - generic [ref=e16]:
+        - generic [ref=e18]:
+          - generic [ref=e22]: AI-Powered Training
+          - heading "Master Your Interviews" [level=1] [ref=e23]:
+            - generic [ref=e24]: Master Your
+            - text: Interviews
+          - paragraph [ref=e25]: Simulate real-world technical interviews. Code, speak, and learn through instant AI evaluation and adaptive quizzes.
+          - generic [ref=e26]:
+            - button "Get Started" [ref=e27] [cursor=pointer]
+            - button "See What's Inside ↓" [ref=e28] [cursor=pointer]
+        - generic [ref=e31]: SCROLL
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - text: Features
+          - heading "Everything You Need to Learn Smarter" [level=2] [ref=e36]:
+            - text: Everything You Need
+            - text: to Learn Smarter
+          - paragraph [ref=e37]: Six powerful tools. One beautiful platform. Built for how your brain actually works.
+        - generic [ref=e38]:
+          - generic [ref=e40]:
+            - img [ref=e42]
+            - heading "Interactive Interview Path" [level=3] [ref=e44]
+            - paragraph [ref=e45]: Practice oral responses transcribed automatically via state-of-the-art whisper recognition, or solve algorithms in our live Monaco Editor.
+          - generic [ref=e47]:
+            - img [ref=e49]
+            - heading "AI Interviewer (Ollama)" [level=3] [ref=e51]
+            - paragraph [ref=e52]: Receive personalized sessions customized dynamically based on your preferred tech role, difficulty level, and current scores.
+          - generic [ref=e54]:
+            - img [ref=e56]
+            - heading "Resume & Skill Parsing" [level=3] [ref=e58]
+            - paragraph [ref=e59]: Drop in your resume, bio, or custom texts. Our system automatically extracts relevant skill sets to structure target mock interview sets.
+          - generic [ref=e61]:
+            - img [ref=e63]
+            - heading "Adaptive Coding & Oral Challenges" [level=3] [ref=e65]
+            - paragraph [ref=e66]: Challenge sets that evolve dynamically in real-time. Code test levels rise based on answers, ensuring you train at the exact limit of your ability.
+          - generic [ref=e68]:
+            - img [ref=e70]
+            - heading "Confidence & Technical Analysis" [level=3] [ref=e72]
+            - paragraph [ref=e73]: Inspect comprehensive reviews with technical scores, confidence grades, ideal code solutions, and line-by-line performance analytics.
+          - generic [ref=e75]:
+            - img [ref=e77]
+            - heading "Live Sandbox Environment" [level=3] [ref=e79]
+            - paragraph [ref=e80]: Develop solutions in the code editor, select languages (Python, JS, C++), and prepare exactly like a live technical screen.
+      - generic [ref=e82]:
+        - generic: "01"
+        - generic [ref=e83]:
+          - generic [ref=e84]:
+            - generic [ref=e85]: Step 01
+            - heading "Configure Profile & Target Role" [level=3] [ref=e86]
+            - paragraph [ref=e87]: Authenticate with Google or email, fill in your details, and define your target developer roles in seconds.
+          - generic:
+            - generic: Step 02
+            - heading "Simulate Verbal & Coding Tests" [level=3]
+            - paragraph: Trigger mock interviews. Transcribe conceptual verbal replies, solve coding tasks in the integrated Monaco workspace, and track progress.
+          - generic:
+            - generic: Step 03
+            - heading "Receive AI Feedback & Analysis" [level=3]
+            - paragraph: Review automated score breakdowns, technical comparisons, code evaluations, and detailed AI insights on how to improve.
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - generic [ref=e92]: 0+
+          - generic [ref=e93]: Mock Interviews
+        - generic [ref=e94]:
+          - generic [ref=e95]: 0+
+          - generic [ref=e96]: Questions Solved
+        - generic [ref=e97]:
+          - generic [ref=e98]: 0+
+          - generic [ref=e99]: Developer Roles
+        - generic [ref=e100]:
+          - generic [ref=e101]: 0.0★
+          - generic [ref=e102]: Satisfaction Score
+      - generic [ref=e104]:
+        - heading "Ready to Master Your Next Interview?" [level=2] [ref=e105]:
+          - text: Ready to
+          - text: Master Your Next Interview?
+        - paragraph [ref=e106]: Unlock your dream engineering offer through smart AI preparation.
+        - generic [ref=e107]:
+          - button "Get Started" [ref=e108] [cursor=pointer]
+          - paragraph [ref=e109]: Free forever for basic prep.
+      - generic [ref=e110]:
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - img "IntervAI Logo" [ref=e114]
+              - generic [ref=e115]: IntervAI
+            - paragraph [ref=e116]: Master technical coding and conceptual rounds with customizable AI interviews, speech analytics, and live evaluation algorithms.
+          - generic [ref=e117]:
+            - heading "Platform" [level=4] [ref=e118]
+            - list [ref=e119]:
+              - listitem [ref=e120]:
+                - button "Practice Sandbox" [ref=e121] [cursor=pointer]
+              - listitem [ref=e122]:
+                - button "Dashboard" [ref=e123] [cursor=pointer]
+              - listitem [ref=e124]:
+                - button "Edit Profile" [ref=e125] [cursor=pointer]
+              - listitem [ref=e126]:
+                - button "Core Features" [ref=e127] [cursor=pointer]
+          - generic [ref=e128]:
+            - heading "Target Roles" [level=4] [ref=e129]
+            - list [ref=e130]:
+              - listitem [ref=e131]: MERN Developer
+              - listitem [ref=e132]: Python Stack
+              - listitem [ref=e133]: Machine Learning
+              - listitem [ref=e134]: DevOps & Cloud
+          - generic [ref=e135]:
+            - heading "Resources" [level=4] [ref=e136]
+            - list [ref=e137]:
+              - listitem [ref=e138]: Support Desk
+              - listitem [ref=e139]: API References
+              - listitem [ref=e140]: Terms of Service
+              - listitem [ref=e141]: Privacy Policy
+        - generic [ref=e142]:
+          - paragraph [ref=e143]: © 2026 IntervAI. All rights reserved.
+          - generic [ref=e144]:
+            - generic [ref=e145]: "Server: local-v1.0"
+            - generic [ref=e146]: •
+            - generic [ref=e147]: "LLM: Ollama Mistral"
+      - generic [ref=e151]:
+        - button "✕" [ref=e152] [cursor=pointer]
+        - generic [ref=e166]:
+          - heading "Your Core Skills" [level=3] [ref=e167]
+          - paragraph [ref=e168]: What technologies do you want to practice?
+          - generic [ref=e169]:
+            - textbox "Add a technology (e.g. React)..." [ref=e170]
+            - button "Add" [ref=e171] [cursor=pointer]
+          - generic [ref=e172]:
+            - generic [ref=e180]:
+              - generic [ref=e181]: JavaScript
+              - button "✕" [ref=e182] [cursor=pointer]
+            - generic [ref=e183]:
+              - generic [ref=e184]: React
+              - button "✕" [ref=e185] [cursor=pointer]
+          - generic [ref=e173]:
+            - generic [ref=e174]: "Popular:"
+            - generic [ref=e175] [cursor=pointer]: JavaScript
+            - generic [ref=e176] [cursor=pointer]: Python
+            - generic [ref=e177] [cursor=pointer]: React
+            - generic [ref=e178] [cursor=pointer]: SQL
+          - button "Launch IntervAI 🌱" [ref=e179] [cursor=pointer]
+  - region "Notifications Alt+T"

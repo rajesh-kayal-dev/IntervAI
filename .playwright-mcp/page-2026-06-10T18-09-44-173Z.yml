@@ -1,0 +1,59 @@
+- generic [ref=e3]:
+  - main [ref=e17]:
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - heading "Premium AI Interview Simulation" [level=1] [ref=e147]
+        - paragraph [ref=e148]: Experience a hyper-realistic video interview with a professional AI interviewer. Customize everything and feel like it's a real Zoom call.
+      - generic [ref=e149]:
+        - generic [ref=e151]:
+          - img [ref=e153]
+          - generic [ref=e156]: Basic Info
+        - generic [ref=e157]:
+          - img [ref=e159]
+          - generic [ref=e162]: Interview Config
+        - generic [ref=e163]:
+          - img [ref=e165]
+          - generic [ref=e168]: Company Context
+        - generic [ref=e169]:
+          - img [ref=e171]
+          - generic [ref=e173]: Choose Interviewer
+        - generic [ref=e174]:
+          - img [ref=e176]
+          - generic [ref=e179]: Resume & Ready
+      - generic [ref=e183]:
+        - generic [ref=e206]:
+          - heading "Interview Configuration" [level=2] [ref=e207]
+          - generic [ref=e208]:
+            - generic [ref=e209]:
+              - generic [ref=e210]: Interview Type
+              - combobox [ref=e211]:
+                - option "Technical" [selected]
+                - option "HR"
+                - option "Behavioral"
+                - option "System Design"
+                - option "Mixed"
+            - generic [ref=e212]:
+              - generic [ref=e213]: Difficulty
+              - combobox [ref=e214]:
+                - option "Easy"
+                - option "Medium" [selected]
+                - option "Hard"
+                - option "FAANG Level"
+          - generic [ref=e215]:
+            - generic [ref=e216]: Duration (Minutes)
+            - combobox [ref=e217]:
+              - option "5 Minutes (Quick)"
+              - option "10 Minutes"
+              - option "15 Minutes (Standard)" [selected]
+              - option "20 Minutes"
+              - option "30 Minutes (Deep Dive)"
+              - option "45 Minutes (Extended)"
+              - option "60 Minutes (Full Loop)"
+        - generic [ref=e199]:
+          - button "Back" [ref=e200] [cursor=pointer]:
+            - img [ref=e201]
+            - text: Back
+          - button "Continue" [active] [ref=e203] [cursor=pointer]:
+            - text: Continue
+            - img [ref=e204]
+  - region "Notifications Alt+T"

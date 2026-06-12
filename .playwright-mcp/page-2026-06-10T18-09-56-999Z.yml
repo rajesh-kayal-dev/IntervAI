@@ -1,0 +1,43 @@
+- generic [ref=e3]:
+  - main [ref=e17]:
+    - generic [ref=e145]:
+      - generic [ref=e146]:
+        - heading "Premium AI Interview Simulation" [level=1] [ref=e147]
+        - paragraph [ref=e148]: Experience a hyper-realistic video interview with a professional AI interviewer. Customize everything and feel like it's a real Zoom call.
+      - generic [ref=e149]:
+        - generic [ref=e151]:
+          - img [ref=e153]
+          - generic [ref=e156]: Basic Info
+        - generic [ref=e157]:
+          - img [ref=e159]
+          - generic [ref=e162]: Interview Config
+        - generic [ref=e163]:
+          - img [ref=e165]
+          - generic [ref=e168]: Company Context
+        - generic [ref=e169]:
+          - img [ref=e171]
+          - generic [ref=e173]: Choose Interviewer
+        - generic [ref=e174]:
+          - img [ref=e176]
+          - generic [ref=e179]: Resume & Ready
+      - generic [ref=e183]:
+        - generic [ref=e218]:
+          - heading "Company & Job Context" [level=2] [ref=e219]
+          - paragraph [ref=e220]: Optional. Provide details to make the interview hyper-relevant to a specific company or role.
+          - generic [ref=e221]:
+            - generic [ref=e222]: Company Name (Optional)
+            - textbox "e.g., Google, Microsoft, Razorpay, Flipkart..." [ref=e223]
+          - generic [ref=e224]:
+            - generic [ref=e225]: Job Description (Optional)
+            - textbox "Paste the job description here..." [ref=e226]
+          - generic [ref=e227]:
+            - generic [ref=e228]: Focus Areas (Optional)
+            - textbox "e.g., React, Microservices, System Design, Python" [ref=e229]
+        - generic [ref=e199]:
+          - button "Back" [ref=e200] [cursor=pointer]:
+            - img [ref=e201]
+            - text: Back
+          - button "Continue" [active] [ref=e203] [cursor=pointer]:
+            - text: Continue
+            - img [ref=e204]
+  - region "Notifications Alt+T"

@@ -616,7 +616,7 @@ function InterviewRunner() {
 
     // 3. Check if code is only the boilerplate stub (user didn't write anything)
     const boilerplate = getBoilerplate(selectedLanguage, currentQuestion?.questionText || '');
-    const userCode    = code.trim();
+    const userCode    = submittedContent.trim();
     const stubCode    = boilerplate.trim();
     if (userCode === stubCode) {
       toast.warning("Please implement the function body before submitting!");

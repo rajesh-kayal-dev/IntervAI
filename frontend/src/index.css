@@ -95,3 +95,221 @@
 .spotlight-card:hover .icon-container {
   transform: scale(1.1) rotate(5deg);
 }
+
+/* ============================================
+   INTERVIEW ROOM — Premium SaaS Styles
+   ============================================ */
+
+/* Interview Room Root Variables */
+.interview-room {
+  --ir-bg: #F6F7FB;
+  --ir-card: #FFFFFF;
+  --ir-primary: #4F46E5;
+  --ir-primary-light: #EEF2FF;
+  --ir-success: #22C55E;
+  --ir-danger: #EF4444;
+  --ir-warning: #F59E0B;
+  --ir-text: #111827;
+  --ir-text-secondary: #6B7280;
+  --ir-border: #E5E7EB;
+  --ir-border-light: #F3F4F6;
+  --ir-shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --ir-shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+  --ir-shadow-lg: 0 8px 30px rgba(0,0,0,0.08);
+  --ir-shadow-xl: 0 20px 60px rgba(0,0,0,0.1);
+  --ir-radius: 16px;
+  --ir-radius-sm: 10px;
+  --ir-radius-xs: 6px;
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--ir-shadow-md);
+}
+
+.glass-card-dark {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Sidebar Tab Styles */
+.ir-tab {
+  position: relative;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ir-text-secondary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  border: none;
+  background: none;
+}
+.ir-tab:hover { color: var(--ir-text); }
+.ir-tab.active {
+  color: var(--ir-primary);
+  font-weight: 600;
+}
+.ir-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 2px;
+  background: var(--ir-primary);
+  border-radius: 2px;
+}
+
+/* Status Indicator Animations */
+@keyframes ir-status-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+}
+.ir-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: ir-status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ir-speaking-wave {
+  0%, 100% { height: 4px; }
+  50% { height: 16px; }
+}
+.ir-wave-bar {
+  width: 3px;
+  border-radius: 3px;
+  animation: ir-speaking-wave 0.8s ease-in-out infinite;
+}
+
+/* Question Card Styles */
+.ir-question-card {
+  padding: 12px 14px;
+  border-radius: var(--ir-radius-sm);
+  border: 1px solid var(--ir-border);
+  transition: all 0.2s ease;
+  background: var(--ir-card);
+}
+.ir-question-card:hover {
+  border-color: var(--ir-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.06);
+}
+.ir-question-card.active {
+  border-color: var(--ir-primary);
+  background: var(--ir-primary-light);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08);
+}
+.ir-question-card.completed {
+  border-color: var(--ir-success);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+/* Video Container */
+.ir-video-container {
+  border-radius: var(--ir-radius);
+  overflow: hidden;
+  box-shadow: var(--ir-shadow-xl);
+  border: 1px solid var(--ir-border);
+  position: relative;
+  background: #0F0F14;
+}
+
+/* PIP Camera */
+.ir-pip {
+  border-radius: var(--ir-radius-sm);
+  overflow: hidden;
+  box-shadow: var(--ir-shadow-lg);
+  border: 3px solid rgba(255,255,255,0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.ir-pip:hover {
+  transform: scale(1.03);
+  box-shadow: var(--ir-shadow-xl);
+  border-color: rgba(255,255,255,0.35);
+}
+
+/* Bottom Control Bar */
+.ir-control-bar {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--ir-border);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.04);
+}
+
+.ir-control-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--ir-border-light);
+  color: var(--ir-text);
+}
+.ir-control-btn:hover {
+  background: var(--ir-border);
+  transform: scale(1.05);
+}
+.ir-control-btn.active {
+  background: var(--ir-danger);
+  color: white;
+}
+.ir-control-btn.active:hover {
+  background: #DC2626;
+}
+
+/* Meeting Notes Section */
+.ir-notes-section {
+  background: var(--ir-card);
+  border-radius: var(--ir-radius);
+  border: 1px solid var(--ir-border);
+  box-shadow: var(--ir-shadow-sm);
+}
+
+/* AI Summary Badge */
+.ir-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+  color: var(--ir-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Transcript Overlay */
+.ir-transcript-overlay {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: var(--ir-shadow-lg);
+  border-radius: var(--ir-radius);
+}
+
+/* Scrollbar for sidebar */
+.ir-sidebar::-webkit-scrollbar { width: 4px; }
+.ir-sidebar::-webkit-scrollbar-track { background: transparent; }
+.ir-sidebar::-webkit-scrollbar-thumb { background: var(--ir-border); border-radius: 4px; }
+
+/* Interview room avatar vignette */
+.ir-avatar-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.3) 100%);
+  z-index: 2;
+}

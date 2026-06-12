@@ -1,0 +1,10 @@
+- generic [ref=e3]:
+  - main [ref=e4]:
+    - generic [ref=e53]:
+      - heading "Quiz Type" [level=2] [ref=e54]
+      - generic [ref=e55]:
+        - button "Technical" [active] [ref=e56] [cursor=pointer]
+        - button "HR" [ref=e57] [cursor=pointer]
+        - button "Mixed" [ref=e58] [cursor=pointer]
+      - button "← Go Back" [ref=e59] [cursor=pointer]
+  - region "Notifications Alt+T"

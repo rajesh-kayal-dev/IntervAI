@@ -42,6 +42,19 @@ export default function SimulationResult() {
     );
   }
 
+  if (!session || !session.report) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center text-center px-4">
+        <div className="w-16 h-16 border-4 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin mb-6"></div>
+        <h2 className="text-2xl font-bold text-white mb-2">Report Still Generating</h2>
+        <p className="text-gray-400 mb-8 max-w-md">Your interview report is being analyzed. Please wait a moment...</p>
+        <button onClick={() => window.location.reload()} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-semibold transition-all">
+          Refresh
+        </button>
+      </div>
+    );
+  }
+
   const { report, config } = session;
 
   const getScoreColor = (score) => {
@@ -70,7 +83,7 @@ export default function SimulationResult() {
               </span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">{config.targetRole} Assessment</h1>
-            <p className="text-gray-400 mt-2 font-medium">Conducted by: {config.personality}</p>
+            <p className="text-gray-400 mt-2 font-medium">Conducted by: {config.interviewerName || config.personality || 'AI Interviewer'}</p>
           </div>
           
           <div className="relative z-10 text-right">

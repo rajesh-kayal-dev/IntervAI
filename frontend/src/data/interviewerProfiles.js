@@ -11,7 +11,8 @@ export const INTERVIEWER_PROFILES = {
       personality: 'Professional, warm, and detail-oriented. She gives clear feedback and makes candidates feel at ease while maintaining high standards.',
       greetingStyle: 'warm',
       color: '#8B5CF6',
-      avatarSeed: 'sarah-chen'
+      avatarSeed: 'sarah-chen',
+      photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=640&h=480&fit=crop&crop=face&q=80'
     },
     {
       id: 'neha',
@@ -24,7 +25,8 @@ export const INTERVIEWER_PROFILES = {
       personality: 'Strategic thinker with a focus on system design and architecture. She challenges candidates with thoughtful, deep-dive questions.',
       greetingStyle: 'professional',
       color: '#EC4899',
-      avatarSeed: 'neha-sharma'
+      avatarSeed: 'neha-sharma',
+      photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=640&h=480&fit=crop&crop=face&q=80'
     },
     {
       id: 'priya',
@@ -37,7 +39,8 @@ export const INTERVIEWER_PROFILES = {
       personality: 'Friendly and approachable. She specializes in behavioral interviews and helps candidates showcase their best selves.',
       greetingStyle: 'friendly',
       color: '#06B6D4',
-      avatarSeed: 'priya-patel'
+      avatarSeed: 'priya-patel',
+      photoUrl: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=640&h=480&fit=crop&crop=face&q=80'
     }
   ],
   Male: [
@@ -52,7 +55,8 @@ export const INTERVIEWER_PROFILES = {
       personality: 'Calm, confident, and highly analytical. He asks incisive questions about scalability, architecture, and trade-offs.',
       greetingStyle: 'confident',
       color: '#3B82F6',
-      avatarSeed: 'david-thompson'
+      avatarSeed: 'david-thompson',
+      photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=640&h=480&fit=crop&crop=face&q=80'
     },
     {
       id: 'rahul',
@@ -65,7 +69,8 @@ export const INTERVIEWER_PROFILES = {
       personality: 'Deep technical expert who loves exploring the "why" behind decisions. He asks challenging follow-up questions that test real understanding.',
       greetingStyle: 'technical',
       color: '#F59E0B',
-      avatarSeed: 'rahul-verma'
+      avatarSeed: 'rahul-verma',
+      photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=640&h=480&fit=crop&crop=face&q=80'
     },
     {
       id: 'alex',
@@ -78,7 +83,8 @@ export const INTERVIEWER_PROFILES = {
       personality: 'Results-oriented with a startup mindset. He focuses on practical experience, ownership, and how candidates handle ambiguity.',
       greetingStyle: 'direct',
       color: '#10B981',
-      avatarSeed: 'alex-rivera'
+      avatarSeed: 'alex-rivera',
+      photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=640&h=480&fit=crop&crop=face&q=80'
     }
   ]
 };

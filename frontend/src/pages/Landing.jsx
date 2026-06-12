@@ -868,7 +868,7 @@ export default function Landing({ autoOpen }) {
                         onError={() => toast.error('Google login failed')}
                         theme="outline"
                         size="large"
-                        width="100%"
+                        width="400"
                         text="continue_with"
                         shape="circle"
                       />
